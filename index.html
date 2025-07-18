@@ -92,33 +92,38 @@
     </main>
 
     <script src="app.js"></script>
+    
     <script>
-        // Elementos de la UI
+        // --- ELEMENTOS DE LA UI ---
         const loginContainer = document.getElementById('login-container');
         const mainContent = document.getElementById('main-content');
         const logoutButton = document.getElementById('logout-button');
         const headerTitle = document.getElementById('header-title');
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
+        const tablaServiciosBody = document.getElementById('tabla-servicios');
 
-        let currentSort = { column: 'timestamp', order: 'desc' };
+        // --- ESTADO DE LA APLICACIÓN ---
+        let currentSort = { column: 'fechaSolicitud', order: 'desc' };
+        let serviciosCache = []; 
+        let unsubscribeServicios; 
 
         // --- MANEJO DE AUTENTICACIÓN ---
-
-        firebase.auth().onAuthStateChanged(async (user) => {
+        firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                // Usuario ha iniciado sesión
-                loginContainer.style.display = 'none'; // Ocultar login
-                mainContent.style.display = 'block'; // Mostrar tabla
-                logoutButton.style.display = 'block'; // Mostrar botón de salir
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                logoutButton.style.display = 'block';
                 headerTitle.textContent = `Planificador: ${user.email}`;
-                await renderizarTabla();
+                iniciarListenerServicios(); 
             } else {
-                // Usuario no ha iniciado sesión
-                loginContainer.style.display = 'block'; // Mostrar login
-                mainContent.style.display = 'none'; // Ocultar tabla
-                logoutButton.style.display = 'none'; // Ocultar botón de salir
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+                logoutButton.style.display = 'none';
                 headerTitle.textContent = 'Portal del Planificador';
+                if (unsubscribeServicios) {
+                    unsubscribeServicios(); 
+                }
             }
         });
 
@@ -126,7 +131,6 @@
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .catch((error) => {
                     errorMessage.textContent = 'Error: Credenciales incorrectas.';
@@ -138,21 +142,32 @@
             firebase.auth().signOut();
         });
 
-        // --- LÓGICA DE LA TABLA (igual que antes, pero ahora funciona por estar autenticado) ---
-
-        async function renderizarTabla() {
-            const filtro = document.getElementById('filtro-estado').value;
-            const tbody = document.getElementById('tabla-servicios');
-            tbody.innerHTML = `<tr><td colspan="11" style="text-align: center;">Cargando servicios...</td></tr>`;
+        // --- LÓGICA DE DATOS Y RENDERIZADO ---
+        function iniciarListenerServicios() {
+            tablaServiciosBody.innerHTML = `<tr><td colspan="11" style="text-align: center;">Cargando servicios...</td></tr>`;
             
-            let servicios = await obtenerServicios();
+            unsubscribeServicios = db.collection('servicios').onSnapshot(snapshot => {
+                const serviciosTemp = [];
+                snapshot.forEach(doc => {
+                    serviciosTemp.push({ id: doc.id, ...doc.data() });
+                });
+                serviciosCache = serviciosTemp;
+                renderizarTabla();
+            }, error => {
+                console.error("Error escuchando los cambios en servicios: ", error);
+                tablaServiciosBody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>`;
+            });
+        }
 
-            const serviciosFiltrados = filtro === 'todos' ? servicios : servicios.filter(s => s.estado === filtro);
+        function renderizarTabla() {
+            const filtro = document.getElementById('filtro-estado').value;
+            let serviciosParaMostrar = [...serviciosCache];
+
+            const serviciosFiltrados = filtro === 'todos' ? serviciosParaMostrar : serviciosParaMostrar.filter(s => s.estado === filtro);
             
             serviciosFiltrados.sort((a, b) => {
                 let valA = a[currentSort.column] || 0;
                 let valB = b[currentSort.column] || 0;
-                // Manejar timestamps de Firebase
                 if (valA.toDate) valA = valA.toDate();
                 if (valB.toDate) valB = valB.toDate();
                 if (typeof valA === 'string') valA = valA.toLowerCase();
@@ -162,9 +177,9 @@
                 return 0;
             });
 
-            tbody.innerHTML = '';
+            tablaServiciosBody.innerHTML = '';
             if (serviciosFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
+                tablaServiciosBody.innerHTML = `<tr><td colspan="11" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
                 return;
             }
 
@@ -180,16 +195,16 @@
                     <td><select name="estado" style="padding: 0.4rem; font-size: 0.9rem;"><option value="Pendiente" ${servicio.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option><option value="Confirmado" ${servicio.estado === 'Confirmado' ? 'selected' : ''}>Confirmado</option><option value="En Progreso" ${servicio.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option><option value="Completado" ${servicio.estado === 'Completado' ? 'selected' : ''}>Completado</option></select></td>
                     <td><button class="btn-delete" name="eliminar" style="background-color: #dc3545; padding: 0.4rem 0.8rem;">Eliminar</button></td>
                 `;
-                tbody.appendChild(tr);
+                tablaServiciosBody.appendChild(tr);
             });
         }
         
+        // --- EVENT LISTENERS DE LA UI ---
         document.getElementById('filtro-estado').addEventListener('change', renderizarTabla);
 
         document.getElementById('exportar-csv').addEventListener('click', async () => {
-            const servicios = await obtenerServicios();
+            const servicios = await obtenerServicios(); 
             if (servicios.length === 0) return alert('No hay servicios para exportar.');
-            // (El resto de la función de exportar es igual y no necesita cambios)
             const cabeceras = Object.keys(servicios[0]);
             const csvRows = [cabeceras.join(',')];
             for (const servicio of servicios) {
@@ -204,7 +219,7 @@
             a.click();
         });
 
-        document.getElementById('tabla-servicios').addEventListener('change', async (e) => {
+        tablaServiciosBody.addEventListener('change', async (e) => {
             if (e.target.name !== 'estado' && e.target.name !== 'fechaAsignada') return;
             const id = e.target.closest('tr').dataset.id;
             const datosActualizados = {};
@@ -212,20 +227,19 @@
             if (e.target.name === 'estado') datosActualizados.estado = e.target.value;
             if (e.target.name === 'fechaAsignada') {
                 datosActualizados.fechaAsignada = e.target.value;
-                const servicios = await obtenerServicios();
-                const servicio = servicios.find(s => s.id === id);
-                if (servicio.estado === 'Pendiente' && e.target.value) datosActualizados.estado = 'Confirmado';
+                const servicio = serviciosCache.find(s => s.id === id); 
+                if (servicio.estado === 'Pendiente' && e.target.value) {
+                    datosActualizados.estado = 'Confirmado';
+                }
             }
-            await actualizarServicio(id, datosActualizados);
-            await renderizarTabla();
+            await actualizarServicio(id, datosActualizados); 
         });
 
-        document.getElementById('tabla-servicios').addEventListener('click', async (e) => {
+        tablaServiciosBody.addEventListener('click', async (e) => {
             if (e.target.name === 'eliminar') {
                 if (!confirm('¿Estás seguro? Esta acción es irreversible.')) return;
                 const id = e.target.closest('tr').dataset.id;
-                await eliminarServicio(id);
-                await renderizarTabla();
+                await eliminarServicio(id); 
             }
         });
         
