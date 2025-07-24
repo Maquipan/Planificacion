@@ -165,6 +165,10 @@
                 <h2>Controles</h2>
                 <div class="filtros-container">
                     <div class="filtro-item">
+                        <label for="filtro-busqueda">Buscar (Nº Req, Nº NV, Cliente, Vendedor, Estado)</label>
+                        <input type="text" id="filtro-busqueda" placeholder="Buscar servicios...">
+                    </div>
+                    <div class="filtro-item">
                         <label for="filtro-estado">Filtrar por estado</label>
                         <select id="filtro-estado">
                             <option value="todos">Todos</option>
@@ -295,9 +299,12 @@
             logoutButton: document.getElementById('logout-button'),
             headerTitle: document.getElementById('header-title'),
             loginForm: document.getElementById('login-form'),
+            emailInput: document.getElementById('email'), // Added for login
+            passwordInput: document.getElementById('password'), // Added for login
             errorMessage: document.getElementById('error-message'),
             tablaServiciosBody: document.getElementById('tabla-servicios'),
             themeToggle: document.getElementById('theme-toggle'),
+            filtroBusqueda: document.getElementById('filtro-busqueda'), // New search input
             filtroEstado: document.getElementById('filtro-estado'),
             filtroVendedor: document.getElementById('filtro-vendedor'),
             resultsInfo: document.getElementById('results-info'),
@@ -361,12 +368,23 @@
         }
 
         function applyFiltersAndRender() {
-            const estado = ui.filtroEstado.value;
-            const vendedor = ui.filtroVendedor.value;
+            const estadoFilter = ui.filtroEstado.value;
+            const vendedorFilter = ui.filtroVendedor.value;
+            const searchTerm = ui.filtroBusqueda.value.toLowerCase(); // Get search term
+
             state.filteredServices = state.serviciosCache.filter(s => {
-                const matchEstado = estado === 'todos' || s.estado === estado;
-                const matchVendedor = vendedor === 'todos' || s.vendedor === vendedor;
-                return matchEstado && matchVendedor;
+                const matchEstado = estadoFilter === 'todos' || s.estado === estadoFilter;
+                const matchVendedor = vendedorFilter === 'todos' || s.vendedor === vendedorFilter;
+                
+                // New search logic
+                const matchSearch = searchTerm === '' || 
+                                    (s.numRequerimiento && s.numRequerimiento.toString().toLowerCase().includes(searchTerm)) ||
+                                    (s.numNV && s.numNV.toString().toLowerCase().includes(searchTerm)) ||
+                                    (s.cliente && s.cliente.toLowerCase().includes(searchTerm)) ||
+                                    (s.vendedor && s.vendedor.split('@')[0].toLowerCase().includes(searchTerm)) ||
+                                    (s.estado && s.estado.toLowerCase().includes(searchTerm));
+
+                return matchEstado && matchVendedor && matchSearch;
             });
             state.filteredServices.sort((a, b) => {
                 let valA = a[state.sortConfig.column] || ''; let valB = b[state.sortConfig.column] || '';
@@ -475,6 +493,7 @@
         // --- EVENT LISTENERS ---
         ui.filtroEstado.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroVendedor.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
+        ui.filtroBusqueda.addEventListener('input', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); }); // New search input listener
 
         document.getElementById('exportar-csv').addEventListener('click', () => {
              if (state.filteredServices.length === 0) return alert('No hay servicios para exportar.');
@@ -544,7 +563,14 @@
             }
         });
 
-        ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(ui.emailInput.value, ui.passwordInput.value).catch(err => { ui.errorMessage.textContent = 'Error: Credenciales incorrectas.'; ui.errorMessage.style.display = 'block'; }); });
+        ui.loginForm.addEventListener('submit', (e) => { 
+            e.preventDefault(); 
+            auth.signInWithEmailAndPassword(ui.emailInput.value, ui.passwordInput.value)
+                .catch(err => { 
+                    ui.errorMessage.textContent = 'Error: Credenciales incorrectas.'; 
+                    ui.errorMessage.style.display = 'block'; 
+                }); 
+        });
         ui.logoutButton.addEventListener('click', () => auth.signOut());
         
         function toggleTheme(isDark) { document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }
