@@ -16,14 +16,14 @@
             --bg-primary: #1a1b26; --bg-secondary: #24283b; --bg-tertiary: #414868;
             --text-primary: #c0caf5; --text-secondary: #a9b1d6; --accent: #7dcfff;
             --accent-glow: rgba(125, 207, 255, 0.2); --border-color: #3b3f51;
-            --success: #9ece6a; --pending: #e0af68; --danger: #f7768e;
+            --success: #9ece6a; --pending: #e0af68; --danger: #f7768e; --in-progress: #7aa2f7;
             --modal-bg: rgba(36, 40, 59, 0.85);
         }
         [data-theme="light"] {
             --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-tertiary: #e9ecef;
             --text-primary: #212529; --text-secondary: #495057; --accent: #007bff;
             --accent-glow: rgba(0, 123, 255, 0.15); --border-color: #dee2e6;
-            --success: #28a745; --pending: #ffc107; --danger: #dc3545;
+            --success: #28a745; --pending: #ffc107; --danger: #dc3545; --in-progress: #17a2b8;
             --modal-bg: rgba(255, 255, 255, 0.85);
         }
         *, *::before, *::after { box-sizing: border-box; }
@@ -52,7 +52,7 @@
 
         .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
         .card h2 { margin-top: 0; margin-bottom: 1.5rem; font-size: 1.2rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        select, input[type="text"], input[type="password"], input[type="email"] {
+        select, input, textarea {
             width: 100%; padding: 0.75rem; font-size: 0.95rem; border: 1px solid var(--border-color);
             border-radius: 8px; box-sizing: border-box; margin-bottom: 0;
             background: var(--bg-tertiary); color: var(--text-primary);
@@ -76,11 +76,26 @@
         th { font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; position: relative; }
         th .sort-indicator { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
         tbody tr:hover { background-color: var(--bg-tertiary); }
-        td input, td select { padding: 0.4rem; font-size: 0.9rem; background: var(--bg-primary); }
+        
+        td input, td select { padding: 0.5rem; font-size: 0.9rem; background: var(--bg-primary); min-width: 150px; }
         .action-cell { display: flex; gap: 0.5rem; align-items: center; }
         .action-cell button { width: auto; font-size: 0.85rem; padding: 0.4rem 0.8rem; }
         .btn-detail { background-color: var(--accent); color: var(--bg-secondary); }
         .btn-delete { background-color: var(--danger); color: white; }
+
+        [data-theme="dark"] input[type="date"] { color-scheme: dark; }
+        td select[name="estado"] {
+            font-weight: 600; border: 2px solid; -webkit-appearance: none; appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23a9b1d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+            background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; padding-right: 2.2rem;
+        }
+        [data-theme="light"] td select[name="estado"] {
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23495057" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+        }
+        td select.status-Pendiente { border-color: var(--pending); color: var(--pending); }
+        td select.status-Confirmado { border-color: var(--accent); color: var(--accent); }
+        td select.status-En-Progreso { border-color: var(--in-progress); color: var(--in-progress); }
+        td select.status-Completado { border-color: var(--success); color: var(--success); }
 
         .table-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         #results-info { font-size: 0.9rem; color: var(--text-secondary); }
@@ -111,7 +126,7 @@
         .modal-content .detail-item span { color: var(--text-primary); font-size: 1rem; }
         .modal-content .full-width { grid-column: 1 / -1; }
         .modal-footer { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
-        .modal-footer textarea { width: 100%; background: var(--bg-primary); padding: 0.5rem; margin-bottom: 1rem; }
+        .modal-footer textarea { margin-bottom: 1rem; }
         .modal-footer button { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
     </style>
 </head>
@@ -257,6 +272,14 @@
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }
+        
+        function styleStatusDropdown(selectElement, status) {
+            selectElement.classList.remove('status-Pendiente', 'status-Confirmado', 'status-En-Progreso', 'status-Completado');
+            if (status) {
+                const statusClass = `status-${status.replace(/\s+/g, '-')}`;
+                selectElement.classList.add(statusClass);
+            }
+        }
 
         const state = {
             serviciosCache: [],
@@ -390,6 +413,9 @@
                         <button class="btn-delete" data-id="${s.id}">Eliminar</button>
                     </div></td>`;
                 ui.tablaServiciosBody.appendChild(tr);
+
+                const statusSelect = tr.querySelector('select[name="estado"]');
+                styleStatusDropdown(statusSelect, s.estado);
             });
         }
         
@@ -438,7 +464,7 @@
             ui.modal.fechaEdicion.textContent = service.fechaEdicion ? formatTimestamp(service.fechaEdicion) : 'Sin ediciones';
             ui.modal.infoServicio.textContent = service.infoServicio || 'N/A';
             ui.modal.observaciones.value = service.observacionesPlanificacion || '';
-            ui.modal.guardarBtn.dataset.serviceId = service.id; // Guardar ID para el botón
+            ui.modal.guardarBtn.dataset.serviceId = service.id;
             ui.modal.overlay.classList.add('visible');
         }
 
@@ -462,13 +488,21 @@
         });
 
         ui.tablaServiciosBody.addEventListener('change', async (e) => {
-            if (e.target.name !== 'estado' && e.target.name !== 'fechaAsignada') return;
-            const id = e.target.closest('tr').dataset.id;
+            const target = e.target;
+            if (target.name !== 'estado' && target.name !== 'fechaAsignada') return;
+            const id = target.closest('tr').dataset.id;
             const datos = {};
-            if (e.target.name === 'estado') datos.estado = e.target.value;
-            if (e.target.name === 'fechaAsignada') {
-                datos.fechaAsignada = e.target.value;
-                if (e.target.closest('tr').querySelector('[name="estado"]').value === 'Pendiente' && e.target.value) datos.estado = 'Confirmado';
+            if (target.name === 'estado') {
+                datos.estado = target.value;
+                styleStatusDropdown(target, target.value);
+            }
+            if (target.name === 'fechaAsignada') {
+                datos.fechaAsignada = target.value;
+                const statusSelect = target.closest('tr').querySelector('[name="estado"]');
+                if (statusSelect.value === 'Pendiente' && target.value) {
+                    datos.estado = 'Confirmado';
+                    styleStatusDropdown(statusSelect, 'Confirmado');
+                }
             }
             await actualizarServicio(id, datos); 
         });
@@ -482,7 +516,7 @@
             if (button.classList.contains('btn-delete')) {
                 if (confirm('¿Seguro que quieres eliminar?')) await eliminarServicio(serviceId);
             } else if (button.classList.contains('btn-detail')) {
-                const service = state.serviciosCache.find(s => s.id === serviceId); // Buscar en el cache completo
+                const service = state.serviciosCache.find(s => s.id === serviceId);
                 if (service) openModal(service);
             }
         });
