@@ -32,7 +32,7 @@
             background-color: var(--bg-primary); color: var(--text-primary);
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
-        .container { max-width: 1800px; margin: 0 auto; padding: 1rem 1.5rem; }
+        .container { margin: 0 auto; padding: 1rem 1.5rem; }
         .header-controls {
             display: flex; justify-content: space-between; align-items: center;
             padding: 1rem 1.5rem; background-color: var(--bg-secondary);
@@ -59,7 +59,7 @@
         }
         button {
              width: 100%; padding: 0.75rem; font-size: 1rem; border: none;
-             border-radius: 8px; box-sizing: border-box; 
+             border-radius: 8px; box-sizing: border-box;
              background-color: var(--accent); color: var(--bg-secondary); font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
         button:hover { filter: brightness(1.1); }
@@ -68,17 +68,78 @@
         #login-container { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 1.5rem; }
         .login-card { max-width: 450px; width: 100%; }
         #error-message { color: var(--danger); text-align: center; margin-top: 1rem; display: none; }
-        
+
         .filtros-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem 1.5rem; align-items: flex-end; }
-        .table-container { overflow-x: auto; }
+        .table-container { overflow-x: auto; } /* Cambiado a auto para forzar scrollbar si es necesario */
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+
+        /* Modificación: Reducir padding general de la tabla y tamaño de fuente */
+        th, td {
+            padding: 0.8rem 0.6rem; /* Reducido de 1rem a 0.8rem 0.6rem */
+            font-size: 0.85rem; /* Ligeramente más pequeño */
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap; /* Mantiene el texto en una línea si es posible */
+        }
         th { font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; position: relative; }
         th .sort-indicator { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
         tbody tr:hover { background-color: var(--bg-tertiary); }
-        
-        td input, td select { padding: 0.5rem; font-size: 0.9rem; background: var(--bg-primary); min-width: 120px; }
-        
+/* Estilo para filas con observaciones de planificación */
+        [data-theme="dark"] tr.has-observation {
+            background-color: rgba(224, 175, 104, 0.1); /* Tono ámbar muy sutil */
+        }
+        [data-theme="light"] tr.has-observation {
+            background-color: rgba(255, 193, 7, 0.15); /* Tono amarillo muy sutil */
+        }
+        tr.has-observation:hover {
+            background-color: var(--bg-tertiary); /* Mantiene el color de hover normal para no sobreescribir */
+        }
+
+        /* CORRECCIÓN: Estilos para inputs/selects dentro de las celdas de la tabla */
+        td input, td select {
+            padding: 0.4rem; /* Un poco menos de padding para hacerlos más compactos */
+            font-size: 0.85rem; /* Coincide con el tamaño de fuente de la celda */
+            min-width: 90px; /* Reducir el min-width si es posible, ajusta según la necesidad */
+            background-color: var(--bg-secondary); /* Coincide con el color de fondo de la celda normal */
+            border: 1px solid var(--border-color);
+            box-sizing: border-box; /* Crucial para que padding y border no desborden */
+            color: var(--text-primary);
+        }
+
+        /* Estilo para el hover de la fila que afecta a los inputs/selects dentro */
+        tbody tr:hover td input,
+        tbody tr:hover td select {
+            background-color: var(--bg-tertiary); /* Coincide con el color de hover de la fila */
+        }
+
+        /* Estilo al enfocar (focus) */
+        td input:focus, td select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        /* Asegura que los input de fecha y hora tengan el color-scheme oscuro en tema oscuro */
+        [data-theme="dark"] input[type="date"], [data-theme="dark"] input[type="time"] {
+            color-scheme: dark;
+            background-color: var(--bg-secondary); /* Refuerza el fondo oscuro */
+            color: var(--text-primary); /* Refuerza el color del texto */
+        }
+
+        /* Permitir que la columna de Cliente se adapte y envuelva el texto */
+        td.cliente-cell { /* Clase para la celda del cliente */
+            white-space: normal; /* Permite que el texto se envuelva */
+            min-width: 150px; /* Un ancho mínimo razonable */
+            max-width: 250px; /* Un ancho máximo para evitar que se extienda demasiado */
+            word-break: break-word; /* Para nombres muy largos sin espacios */
+        }
+
+        /* Asegurar que las columnas de botón no tomen demasiado espacio */
+        .action-cell button {
+            padding: 0.3rem 0.6rem; /* Reducir padding de los botones */
+            font-size: 0.8rem; /* Reducir tamaño de fuente de los botones */
+        }
+
         .tecnico-display { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
         .tecnico-names { font-size: 0.9rem; padding: 0.5rem; background-color: var(--bg-primary); border-radius: 6px; min-height: 38px; width: 100%; white-space: normal; }
         .btn-select-tecnicos { width: 100%; font-size: 0.85rem; padding: 0.4rem 0.8rem; }
@@ -94,7 +155,6 @@
         .status-badge.badge-pendiente { background-color: var(--pending); color: #1a1b26; }
         .status-badge.badge-na { background-color: transparent; color: var(--text-secondary); }
 
-        [data-theme="dark"] input[type="date"], [data-theme="dark"] input[type="time"] { color-scheme: dark; }
         td select[name="estado"] {
             font-weight: 600; border: 2px solid; -webkit-appearance: none; appearance: none;
             background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23a9b1d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
@@ -103,7 +163,7 @@
         [data-theme="light"] td select[name="estado"] {
             background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23495057" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
         }
-        
+
         td select.status-Pendiente, td select.status-Esperando-Repuestos { border-color: var(--pending); color: var(--pending); }
         td select.status-Confirmado { border-color: var(--accent); color: var(--accent); }
         td select.status-Otros { border-color: var(--text-secondary); color: var(--text-secondary); }
@@ -125,31 +185,146 @@
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(24px); }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity var(--transition-speed); }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity var(--transition-speed);
+        }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-container { background: var(--modal-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 16px; width: 90%; max-width: 800px; padding: 2rem; transform: scale(0.9); transition: transform var(--transition-speed); }
+        .modal-container {
+            background: var(--modal-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            width: 90%; /* Start with a high percentage width */
+            max-width: 800px; /* Max width remains the same */
+            padding: 2rem;
+            transform: scale(0.9); transition: transform var(--transition-speed);
+            /* Added for scrollability within the modal */
+            display: flex; /* Flexbox for internal layout */
+            flex-direction: column; /* Stack header, content, footer vertically */
+            max-height: 95vh; /* Limit modal height to viewport height */
+        }
         .modal-overlay.visible .modal-container { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
         .modal-header h2 { margin: 0; color: var(--accent); }
         .modal-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; padding: 0; }
+        .modal-content {
+            flex-grow: 1; /* Allow content to grow and take available space */
+            overflow-y: auto; /* Enable scrolling for modal content */
+            padding-right: 10px; /* Add some padding for scrollbar if present */
+            margin-bottom: 1.5rem; /* Space before footer */
+        }
         .modal-content .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
         .modal-content .detail-item strong { display: block; color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.875rem; text-transform: uppercase; }
-        .modal-content .detail-item span { color: var(--text-primary); font-size: 1rem; }
+        .modal-content .detail-item span { color: var(--text-primary); font-size: 1rem; } /* Esto ya no se usará mucho */
+        .modal-content .detail-item input,
+        .modal-content .detail-item select,
+        .modal-content .detail-item textarea {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        /* Estilo para el input de monto en el modal */
+        .modal-content .detail-item .currency-input {
+            position: relative;
+            width: 100%; /* Asegura que ocupe todo el ancho disponible */
+        }
+        .modal-content .detail-item .currency-input::before {
+            content: "$";
+            position: absolute;
+            left: 10px; /* Posiciona el $ dentro del input */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary); /* Color del símbolo */
+            pointer-events: none; /* Asegura que el $ no interfiera con el input */
+            font-size: 0.9rem; /* Consistente con el tamaño de fuente del input */
+        }
+        .modal-content .detail-item .currency-input input {
+            padding-left: 25px; /* Ajusta el padding para dar espacio al símbolo $ */
+        }
+        /* Fin estilo para el input de monto */
+
         .modal-content .full-width { grid-column: 1 / -1; }
-        .modal-footer { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem; }
+        .modal-footer {
+            margin-top: auto; /* Push footer to the bottom if content is short */
+            border-top: 1px solid var(--border-color); padding-top: 1.5rem;
+            display: flex; justify-content: flex-end; gap: 1rem;
+            flex-shrink: 0; /* Prevent footer from shrinking */
+            flex-direction: column; /* Stack elements vertically in footer */
+            align-items: stretch; /* Stretch items to full width */
+        }
         .modal-footer textarea { margin-bottom: 1rem; }
-        .modal-footer button { width: auto; padding: 0.5rem 1.2rem; font-size: 0.9rem; }
-        
+        .modal-footer button { width: auto; padding: 0.5rem 1.2rem; font-size: 0.9rem; align-self: flex-end; /* Align button to the right */ }
+
         #tecnico-select-modal .modal-container { max-width: 500px; }
         #tecnico-list { max-height: 40vh; overflow-y: auto; padding-right: 1rem; }
         .tecnico-check-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: 8px; transition: background-color var(--transition-speed); }
         .tecnico-check-item:hover { background-color: var(--bg-tertiary); }
         .tecnico-check-item input[type="checkbox"] { width: 1.2em; height: 1.2em; accent-color: var(--accent); }
         .tecnico-check-item label { margin-bottom: 0; font-weight: normal; font-size: 1rem; width: 100%; cursor: pointer; }
+
+        /* Media queries ajustadas para mejor responsive */
+        @media (max-width: 992px) {
+            .filtros-container { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } /* Ajustar columnas de filtro */
+            .table-container { -webkit-overflow-scrolling: touch; }
+            table {
+                min-width: 1200px; /* Asegura que la tabla tenga un ancho mínimo y fuerza el scroll horizontal si es necesario */
+            }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 0.5rem; } /* Menos padding en pantallas muy pequeñas */
+            .filtros-container { grid-template-columns: 1fr; } /* Una columna para filtros en móvil */
+            th, td {
+                padding: 0.6rem 0.4rem; /* Más reducción de padding */
+                font-size: 0.75rem; /* Más reducción de fuente */
+            }
+            td input, td select {
+                padding: 0.3rem;
+                font-size: 0.75rem;
+                min-width: 70px; /* Aún más pequeño si es necesario */
+            }
+            .tecnico-display .tecnico-names {
+                font-size: 0.75rem; /* Coincidir con el tamaño de fuente de la celda */
+                min-height: 30px; /* Ajustar altura mínima si se reduce el padding */
+            }
+            .btn-select-tecnicos {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.5rem;
+            }
+            .action-cell button {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+            .modal-container {
+                width: 95%; /* Even wider on small screens */
+                padding: 1rem; /* Less padding for more space */
+                max-height: 90vh; /* Adjust max height for very small screens */
+            }
+            .modal-content .detail-grid {
+                grid-template-columns: 1fr; /* Single column layout for modal content on small screens */
+            }
+            .modal-footer {
+                padding-top: 1rem; /* Adjust footer padding */
+            }
+            .modal-footer button {
+                width: 100%; /* Make buttons full width in footer on small screens */
+            }
+        }
+        @media (max-width: 600px) {
+            .header-controls { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .action-buttons { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
-    
+
     <div id="login-container">
         <div class="card login-card">
             <h2>Acceso de Planificador</h2>
@@ -203,6 +378,12 @@
                         </select>
                     </div>
                     <div>
+                        <label for="filtro-tipo-servicio">Filtrar por Tipo Servicio</label>
+                        <select id="filtro-tipo-servicio">
+                            <option value="todos">Todos</option>
+                            </select>
+                    </div>
+                    <div>
                         <label>&nbsp;</label>
                         <button id="abrir-modal-masivo" class="icon-btn" style="width: 100%; justify-content: center;">
                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 8a1 1 0 0 1-1 1H9v4a1 1 0 0 1-2 0V9H3a1 1 0 0 1 0-2h4V3a1 1 0 0 1 2 0v4h4a1 1 0 0 1 1 1z"/></svg>
@@ -228,7 +409,7 @@
                                 <th data-sort="numRequerimiento">Nº Req.<span class="sort-indicator"></span></th>
                                 <th data-sort="numNV">Nº NV<span class="sort-indicator"></span></th>
                                 <th data-sort="cliente">Cliente<span class="sort-indicator"></span></th>
-                                <th data-sort="vendedor">Vendedor<span class="sort-indicator"></span></th>
+                                <th data-sort="montoServicio">Monto<span class="sort-indicator"></span></th> <th data-sort="tipoServicio">Tipo Servicio<span class="sort-indicator"></span></th> <th data-sort="vendedor">Vendedor<span class="sort-indicator"></span></th>
                                 <th>Tiene Rep.</th>
                                 <th>Rep. Desp.</th>
                                 <th>Fecha Asignada</th>
@@ -250,38 +431,91 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="service-modal">
         <div class="modal-container">
             <div class="modal-header">
-                <h2 id="modal-req-num"></h2>
+                <h2 id="modal-title-req-num">Editar Servicio: Req #<span id="modal-req-num-display"></span></h2>
                 <button class="modal-close-btn" data-modal-id="service-modal">&times;</button>
             </div>
             <div class="modal-content">
                 <div class="detail-grid">
-                    <div class="detail-item"><strong>Cliente:</strong> <span id="modal-cliente"></span></div>
-                    <div class="detail-item"><strong>Nº NV:</strong> <span id="modal-numNV"></span></div>
-                    <div class="detail-item full-width"><strong>Dirección:</strong> <span id="modal-direccion"></span></div>
-                    <div class="detail-item"><strong>Vendedor:</strong> <span id="modal-vendedor"></span></div>
-                    <div class="detail-item"><strong>Estado Actual:</strong> <span id="modal-estado"></span></div>
-                    <div class="detail-item"><strong>Técnico(s) Asignado(s):</strong> <span id="modal-tecnico"></span></div>
+                    <div class="detail-item">
+                        <strong>Nº Req:</strong>
+                        <input type="text" id="modal-numRequerimiento-input" data-field="numRequerimiento">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Nº NV:</strong>
+                        <input type="text" id="modal-numNV-input" data-field="numNV">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Cliente:</strong>
+                        <input type="text" id="modal-cliente-input" data-field="cliente">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Monto Servicio:</strong>
+                        <div class="currency-input">
+                            <input type="text" id="modal-montoServicio-input" data-field="montoServicio" onkeyup="formatCurrency(this)">
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Tipo Servicio:</strong>
+                        <select id="modal-tipoServicio-select" data-field="tipoServicio">
+                            <option value="">Seleccione un tipo</option>
+                            </select>
+                    </div>
+                    <div class="detail-item full-width">
+                        <strong>Dirección:</strong>
+                        <input type="text" id="modal-direccion-input" data-field="direccion">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Vendedor:</strong>
+                        <input type="email" id="modal-vendedor-input" data-field="vendedor">
+                    </div>
+                     <div class="detail-item">
+                        <strong>Contacto:</strong>
+                        <input type="text" id="modal-contacto-input" data-field="nomContacto">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Teléfono:</strong>
+                        <input type="text" id="modal-telefono-input" data-field="numContacto">
+                    </div>
+                    <div class="detail-item">
+                        <strong>Tiene Repuestos:</strong>
+                        <select id="modal-tieneRepuestos-select" data-field="tieneRepuestos">
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                            <option value="N/A">N/A</option>
+                        </select>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Repuestos Despachados:</strong>
+                        <select id="modal-repDespachados-select" data-field="repuestosDespachados">
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                            <option value="N/A">N/A</option>
+                        </select>
+                    </div>
+
                     <div class="detail-item"><strong>Fecha Asignada:</strong> <span id="modal-fechaAsignada"></span></div>
                     <div class="detail-item"><strong>Hora Traslado:</strong> <span id="modal-horaTraslado"></span></div>
                     <div class="detail-item"><strong>Hora Inicio:</strong> <span id="modal-horaInicio"></span></div>
                     <div class="detail-item"><strong>Hora Término:</strong> <span id="modal-horaTermino"></span></div>
-                    <div class="detail-item"><strong>Contacto:</strong> <span id="modal-contacto"></span></div>
-                    <div class="detail-item"><strong>Teléfono:</strong> <span id="modal-telefono"></span></div>
-                    <div class="detail-item"><strong>Tiene Repuestos:</strong> <span id="modal-tieneRepuestos"></span></div>
-                    <div class="detail-item"><strong>Repuestos Despachados:</strong> <span id="modal-repDespachados"></span></div>
+                    <div class="detail-item"><strong>Técnico(s) Asignado(s):</strong> <span id="modal-tecnico"></span></div>
+                    <div class="detail-item"><strong>Estado Actual:</strong> <span id="modal-estado"></span></div>
+
+                    <div class="detail-item full-width">
+                        <strong>Info. Servicio:</strong>
+                        <textarea id="modal-info-servicio-textarea" rows="3" data-field="infoServicio"></textarea>
+                    </div>
                     <div class="detail-item"><strong>Fecha Creación:</strong> <span id="modal-fecha-solicitud"></span></div>
                     <div class="detail-item"><strong>Última Edición:</strong> <span id="modal-fecha-edicion"></span></div>
-                    <div class="detail-item full-width"><strong>Info. Servicio:</strong> <span id="modal-info-servicio"></span></div>
                 </div>
             </div>
-            <div class="modal-footer" style="justify-content: flex-start; flex-direction: column; align-items: stretch;">
+            <div class="modal-footer">
                 <label for="modal-observaciones">Observaciones de Planificación</label>
-                <textarea id="modal-observaciones" rows="3"></textarea>
-                <button id="modal-guardar-btn" style="width: auto; align-self: flex-end;">Guardar Observaciones</button>
+                <textarea id="modal-observaciones" rows="3" data-field="observacionesPlanificacion"></textarea>
+                <button id="modal-guardar-btn">Guardar Cambios</button>
             </div>
         </div>
     </div>
@@ -312,7 +546,7 @@
                  <label for="bulk-paste-area">Pega aquí los datos desde tu planilla (Excel, Google Sheets)</label>
                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: -0.5rem; margin-bottom: 1rem;">
                     Asegúrate de que las columnas estén en el siguiente orden: <br>
-                    <strong>Nº Req</strong> | <strong>Nº NV</strong> | <strong>Cliente</strong> | <strong>Vendedor (email)</strong> | <strong>Fecha Asignada</strong> | <strong>H. Traslado</strong> | <strong>H. Inicio</strong> | <strong>H. Termino</strong> | <strong>Técnico(s)</strong> | <strong>Info. Servicio</strong>
+                    <strong>Nº Req</strong> | <strong>Nº NV</strong> | <strong>Cliente</strong> | **Monto Servicio** | **Tipo Servicio** | <strong>Vendedor (email)</strong> | <strong>Fecha Asignada</strong> | <strong>H. Traslado</strong> | <strong>H. Inicio</strong> | <strong>H. Termino</strong> | <strong>Técnico(s)</strong> | <strong>Info. Servicio</strong>
                 </p>
                 <textarea id="bulk-paste-area" rows="10" placeholder="Columna 1	Columna 2	Columna 3	..."></textarea>
             </div>
@@ -332,18 +566,46 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        
+
         const actualizarServicio = async (id, data) => {
             const finalData = { ...data, fechaEdicion: firebase.firestore.FieldValue.serverTimestamp() };
-            await db.collection('servicios').doc(id).update(finalData);
+            try {
+                await db.collection('servicios').doc(id).update(finalData);
+            } catch (error) {
+                console.error("Error al actualizar servicio: ", error);
+                alert("Error al actualizar el servicio. Por favor, inténtalo de nuevo.");
+            }
         }
-        const eliminarServicio = async (id) => await db.collection('servicios').doc(id).delete();
-        
+
+        const eliminarServicio = async (id) => {
+            const originalServices = [...state.serviciosCache]; // Almacena el estado original para revertir
+            const originalFilteredServices = [...state.filteredServices]; // Almacena el estado filtrado original
+
+            // Optimísticamente, elimina el servicio del caché y de la lista filtrada
+            state.serviciosCache = state.serviciosCache.filter(s => s.id !== id);
+            state.filteredServices = state.filteredServices.filter(s => s.id !== id);
+            renderAll(); // Vuelve a renderizar inmediatamente con el elemento eliminado
+
+            try {
+                await db.collection('servicios').doc(id).delete();
+                // El onSnapshot de Firestore manejará la actualización final del estado.
+                // No se necesita una llamada explícita a renderAll() aquí, ya que el listener
+                // se encargará de sincronizar el estado.
+            } catch (error) {
+                console.error("Error al eliminar servicio: ", error);
+                alert("Error al eliminar el servicio. Por favor, inténtalo de nuevo.");
+                // Revertir si la eliminación falla
+                state.serviciosCache = originalServices;
+                state.filteredServices = originalFilteredServices; // También revertir servicios filtrados
+                renderAll(); // Vuelve a renderizar para mostrar el elemento de nuevo
+            }
+        };
+
         function formatTimestamp(timestamp) {
             if (!timestamp || typeof timestamp.toDate !== 'function') return 'N/A';
             return timestamp.toDate().toLocaleString('es-CL');
         }
-        
+
         function styleStatusDropdown(selectElement, status) {
             selectElement.classList.remove('status-Pendiente', 'status-Confirmado', 'status-Esperando-Repuestos', 'status-Otros');
             if (status) {
@@ -351,6 +613,27 @@
                 selectElement.classList.add(statusClass);
             }
         }
+
+        // Función para formatear monto en pesos chilenos para visualización
+        function displayCurrency(value) {
+            if (value === undefined || value === null || value === '' || isNaN(value)) return 'N/A';
+            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10); // Limpia y convierte a número
+            if (isNaN(numericValue)) return 'N/A';
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
+        }
+
+        // Función para formatear el input de moneda en tiempo real
+        function formatCurrency(input) {
+            let value = input.value.replace(/[^0-9]/g, ''); // Elimina cualquier caracter no numérico
+            if (value === '') {
+                input.value = '';
+                return;
+            }
+            let numericValue = parseInt(value, 10);
+            value = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
+            input.value = value.replace('CLP', '').trim(); // Elimina 'CLP' y ajusta espacios
+        }
+
 
         const state = {
             serviciosCache: [],
@@ -360,7 +643,7 @@
             sortConfig: { column: 'timestamp', order: 'desc' },
             pagination: { currentPage: 1, rowsPerPage: 20 },
         };
-        let unsubscribeServicios; 
+        let unsubscribeServicios;
 
         const ui = {
             loginContainer: document.getElementById('login-container'),
@@ -368,37 +651,41 @@
             logoutButton: document.getElementById('logout-button'),
             headerTitle: document.getElementById('header-title'),
             loginForm: document.getElementById('login-form'),
-            emailInput: document.getElementById('email'), 
+            emailInput: document.getElementById('email'),
             passwordInput: document.getElementById('password'),
             errorMessage: document.getElementById('error-message'),
             tablaServiciosBody: document.getElementById('tabla-servicios'),
             filtroBusqueda: document.getElementById('filtro-busqueda'),
             filtroEstado: document.getElementById('filtro-estado'),
             filtroVendedor: document.getElementById('filtro-vendedor'),
+            filtroTipoServicio: document.getElementById('filtro-tipo-servicio'), // Nueva referencia para el filtro de tipo de servicio
             resultsInfo: document.getElementById('results-info'),
             paginationControls: document.getElementById('pagination-controls'),
             themeToggle: document.getElementById('theme-toggle'),
             abrirModalMasivoBtn: document.getElementById('abrir-modal-masivo'),
             modal: {
                 overlay: document.getElementById('service-modal'),
-                reqNum: document.getElementById('modal-req-num'),
-                cliente: document.getElementById('modal-cliente'),
-                numNV: document.getElementById('modal-numNV'),
-                direccion: document.getElementById('modal-direccion'),
-                vendedor: document.getElementById('modal-vendedor'),
-                estado: document.getElementById('modal-estado'),
-                tecnico: document.getElementById('modal-tecnico'),
-                fechaAsignada: document.getElementById('modal-fechaAsignada'),
-                horaTraslado: document.getElementById('modal-horaTraslado'),
-                horaInicio: document.getElementById('modal-horaInicio'),
-                horaTermino: document.getElementById('modal-horaTermino'),
-                contacto: document.getElementById('modal-contacto'),
-                telefono: document.getElementById('modal-telefono'),
-                tieneRepuestos: document.getElementById('modal-tieneRepuestos'),
-                repDespachados: document.getElementById('modal-repDespachados'),
-                fechaSolicitud: document.getElementById('modal-fecha-solicitud'),
-                fechaEdicion: document.getElementById('modal-fecha-edicion'),
-                infoServicio: document.getElementById('modal-info-servicio'),
+                titleReqNumDisplay: document.getElementById('modal-req-num-display'), // Para el título
+                numRequerimientoInput: document.getElementById('modal-numRequerimiento-input'),
+                clienteInput: document.getElementById('modal-cliente-input'),
+                numNVInput: document.getElementById('modal-numNV-input'),
+                montoServicioInput: document.getElementById('modal-montoServicio-input'), // Nuevo input en modal
+                tipoServicioSelect: document.getElementById('modal-tipoServicio-select'),   // Nuevo select en modal
+                direccionInput: document.getElementById('modal-direccion-input'),
+                vendedorInput: document.getElementById('modal-vendedor-input'),
+                estadoDisplay: document.getElementById('modal-estado'), // Sigue siendo display
+                tecnicoDisplay: document.getElementById('modal-tecnico'), // Sigue siendo display
+                fechaAsignadaDisplay: document.getElementById('modal-fechaAsignada'), // Sigue siendo display
+                horaTrasladoDisplay: document.getElementById('modal-horaTraslado'), // Sigue siendo display
+                horaInicioDisplay: document.getElementById('modal-horaInicio'), // Sigue siendo display
+                horaTerminoDisplay: document.getElementById('modal-horaTermino'), // Sigue siendo display
+                contactoInput: document.getElementById('modal-contacto-input'),
+                telefonoInput: document.getElementById('modal-telefono-input'),
+                tieneRepuestosSelect: document.getElementById('modal-tieneRepuestos-select'),
+                repDespachadosSelect: document.getElementById('modal-repDespachados-select'),
+                fechaSolicitudDisplay: document.getElementById('modal-fecha-solicitud'), // Sigue siendo display
+                fechaEdicionDisplay: document.getElementById('modal-fecha-edicion'), // Sigue siendo display
+                infoServicioTextarea: document.getElementById('modal-info-servicio-textarea'),
                 observaciones: document.getElementById('modal-observaciones'),
                 guardarBtn: document.getElementById('modal-guardar-btn'),
             },
@@ -415,7 +702,7 @@
             },
             modalCloseBtns: document.querySelectorAll('.modal-close-btn'),
         };
-        
+
         async function cargarTecnicos() {
             try {
                 const snapshot = await db.collection('tecnicos').where('activo', '==', true).orderBy('nombre').get();
@@ -431,27 +718,28 @@
                 ui.loginContainer.style.display = 'none';
                 ui.mainContent.style.display = 'block';
                 ui.headerTitle.textContent = `Planificador: ${user.email.split('@')[0]}`;
-                await cargarTecnicos(); 
-                iniciarListenerServicios(); 
+                await cargarTecnicos();
+                iniciarListenerServicios();
             } else {
                 ui.loginContainer.style.display = 'flex';
                 ui.mainContent.style.display = 'none';
-                if (unsubscribeServicios) unsubscribeServicios(); 
+                if (unsubscribeServicios) unsubscribeServicios();
             }
         });
 
         function iniciarListenerServicios() {
-            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="13" style="text-align: center;">Cargando servicios...</td></tr>`;
+            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">Cargando servicios...</td></tr>`; // Modificado colspan
             unsubscribeServicios = db.collection('servicios').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
                 state.serviciosCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 populateVendedorFilter();
+                populateTipoServicioFilter(); // Nueva llamada a la función para rellenar el filtro de tipo de servicio
                 applyFiltersAndRender();
             }, error => {
                 console.error("Error al escuchar servicios:", error);
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`;
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`; // Modificado colspan
             });
         }
-        
+
         function populateVendedorFilter() {
             state.vendedoresCache = [...new Set(state.serviciosCache.map(s => s.vendedor).filter(Boolean))].sort();
             const currentSelection = ui.filtroVendedor.value;
@@ -463,37 +751,82 @@
             ui.filtroVendedor.value = state.vendedoresCache.includes(currentSelection) ? currentSelection : 'todos';
         }
 
+        // Nueva función para rellenar el filtro de Tipo de Servicio
+        function populateTipoServicioFilter() {
+            const currentSelection = ui.filtroTipoServicio.value;
+            ui.filtroTipoServicio.innerHTML = '<option value="todos">Todos</option>';
+
+            // Definir todas las opciones, incluyendo las nuevas y la modificación
+            const tiposDeServicio = [
+                "Canal Tradicional",
+                "Descanso Turno",
+                "Montaje",
+                "Otro", // Nuevo
+                "Post Venta",
+                "Proyección Asistencia",
+                "Proyección Mantención", // Modificado de "Proyeccion"
+                "Proyección Repuestos", // Nuevo
+                "Retail Asistencia",
+                "Retail Mantencion",
+                "Retail Repuestos",
+                "Turno",
+                "Vacaciones"
+            ].sort(); // Ordenar alfabéticamente
+
+            tiposDeServicio.forEach(tipo => {
+                const option = new Option(tipo, tipo);
+                ui.filtroTipoServicio.add(option);
+            });
+            ui.filtroTipoServicio.value = tiposDeServicio.includes(currentSelection) ? currentSelection : 'todos';
+
+            // Actualizar también el select del modal para que tenga las mismas opciones
+            const modalTipoServicioSelect = ui.modal.tipoServicioSelect;
+            const currentModalSelection = modalTipoServicioSelect.value;
+            modalTipoServicioSelect.innerHTML = '<option value="">Seleccione un tipo</option>'; // Mantener la opción de "Seleccione un tipo"
+
+            tiposDeServicio.forEach(tipo => {
+                const option = new Option(tipo, tipo);
+                modalTipoServicioSelect.add(option);
+            });
+            modalTipoServicioSelect.value = tiposDeServicio.includes(currentModalSelection) ? currentModalSelection : '';
+        }
+
         function applyFiltersAndRender() {
             const estadoFilter = ui.filtroEstado.value;
             const vendedorFilter = ui.filtroVendedor.value;
+            const tipoServicioFilter = ui.filtroTipoServicio.value; // Obtener el valor del filtro de tipo de servicio
             const searchTerm = ui.filtroBusqueda.value.toLowerCase();
 
             state.filteredServices = state.serviciosCache.filter(s => {
                 const matchEstado = estadoFilter === 'todos' || s.estado === estadoFilter;
                 const matchVendedor = vendedorFilter === 'todos' || s.vendedor === vendedorFilter;
-                const matchSearch = searchTerm === '' || 
+                const matchTipoServicio = tipoServicioFilter === 'todos' || s.tipoServicio === tipoServicioFilter; // Nuevo filtro de tipo de servicio
+                const matchSearch = searchTerm === '' ||
                                     (s.numRequerimiento?.toLowerCase().includes(searchTerm)) ||
                                     (s.numNV?.toLowerCase().includes(searchTerm)) ||
                                     (s.cliente?.toLowerCase().includes(searchTerm)) ||
                                     (s.vendedor?.toLowerCase().includes(searchTerm)) ||
-                                    (s.estado?.toLowerCase().includes(searchTerm));
-                return matchEstado && matchVendedor && matchSearch;
+                                    (s.estado?.toLowerCase().includes(searchTerm)) ||
+                                    (s.montoServicio && displayCurrency(s.montoServicio).toLowerCase().includes(searchTerm)) || // Permitir búsqueda por monto
+                                    (s.tipoServicio?.toLowerCase().includes(searchTerm)); // Permitir búsqueda por tipo de servicio
+                return matchEstado && matchVendedor && matchTipoServicio && matchSearch; // Incluir el nuevo filtro
             });
             renderAll();
         }
-        
+
         function renderAll() {
             renderTable();
             renderPagination();
+            updateSortIndicators(); // Asegurar que los indicadores de ordenamiento se actualicen
         }
 
         function renderTable() {
             ui.tablaServiciosBody.innerHTML = '';
             const { currentPage, rowsPerPage } = state.pagination;
-            const servicesToRender = state.filteredServices;
+            const servicesToRender = state.filteredServices; // Ya está ordenado por applyFiltersAndRender()
 
             if (servicesToRender.length === 0) {
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="13" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">No hay servicios que mostrar.</td></tr>`; // Modificado colspan
                 return;
             }
 
@@ -511,13 +844,17 @@
             pageServices.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = s.id;
+
+                if (s.observacionesPlanificacion && s.observacionesPlanificacion.trim() !== '') {
+                    tr.classList.add('has-observation');
+                }
+
                 const assignedTecnicos = s.tecnicos || [];
-                
+
                 tr.innerHTML = `
                     <td>${s.numRequerimiento || 'N/A'}</td>
                     <td>${s.numNV || 'N/A'}</td>
-                    <td style="white-space:normal; min-width:200px;">${s.cliente || 'N/A'}</td>
-                    <td>${s.vendedor ? s.vendedor.split('@')[0] : 'N/A'}</td>
+                    <td class="cliente-cell">${s.cliente || 'N/A'}</td> <td>${displayCurrency(s.montoServicio)}</td> <td>${s.tipoServicio || 'N/A'}</td> <td>${s.vendedor ? s.vendedor.split('@')[0] : 'N/A'}</td>
                     <td><span class="status-badge ${getBadgeClass(s.tieneRepuestos)}">${s.tieneRepuestos || 'N/A'}</span></td>
                     <td><span class="status-badge ${getBadgeClass(s.repuestosDespachados)}">${s.repuestosDespachados || 'N/A'}</span></td>
                     <td><input type="date" name="fechaAsignada" value="${s.fechaAsignada || ''}"></td>
@@ -539,7 +876,7 @@
                         </select>
                     </td>
                     <td><div class="action-cell">
-                        <button class="btn-detail" data-id="${s.id}">Detalle</button>
+                        <button class="btn-detail" data-id="${s.id}">Editar</button>
                         <button class="btn-delete" data-id="${s.id}">Eliminar</button>
                     </div></td>`;
                 ui.tablaServiciosBody.appendChild(tr);
@@ -548,7 +885,7 @@
                 styleStatusDropdown(statusSelect, s.estado);
             });
         }
-        
+
         function renderPagination() {
             const totalServices = state.filteredServices.length;
             const { currentPage, rowsPerPage } = state.pagination;
@@ -571,31 +908,62 @@
             }
             ui.paginationControls.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
         }
-        
+
+        function updateSortIndicators() {
+            document.querySelectorAll('th[data-sort]').forEach(header => {
+                const indicator = header.querySelector('.sort-indicator');
+                const column = header.dataset.sort;
+                if (indicator) {
+                    indicator.textContent = (column === state.sortConfig.column) ? (state.sortConfig.order === 'asc' ? ' ▲' : ' ▼') : '';
+                }
+            });
+        }
+
+        // Se agregó esta función para el ordenamiento de columnas
+        document.querySelectorAll('th[data-sort]').forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.sort;
+                if (state.sortConfig.column === column) {
+                    state.sortConfig.order = state.sortConfig.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.sortConfig.column = column;
+                    state.sortConfig.order = 'asc';
+                }
+                applyFiltersAndRender(); // Re-aplicar filtros y renderizar para reordenar
+            });
+        });
+
         function openModal(modalId, service) {
             if (modalId === 'service-modal' && service) {
                 const m = ui.modal;
                 const assignedTecnicos = service.tecnicos && service.tecnicos.length > 0 ? service.tecnicos.join(', ') : 'Sin Asignar';
 
-                m.reqNum.textContent = `Detalles: Req #${service.numRequerimiento || 'N/A'}`;
-                m.cliente.textContent = service.cliente || 'N/A';
-                m.numNV.textContent = service.numNV || 'N/A';
-                m.direccion.textContent = service.direccion || 'N/A';
-                m.vendedor.textContent = service.vendedor ? service.vendedor.split('@')[0] : 'N/A';
-                m.estado.textContent = service.estado || 'N/A';
-                m.tecnico.textContent = assignedTecnicos;
-                m.fechaAsignada.textContent = service.fechaAsignada || 'N/A';
-                m.horaTraslado.textContent = service.horaTraslado || 'N/A';
-                m.horaInicio.textContent = service.horaInicio || 'N/A';
-                m.horaTermino.textContent = service.horaTermino || 'N/A';
-                m.contacto.textContent = service.nomContacto || 'N/A';
-                m.telefono.textContent = service.numContacto || 'N/A';
-                m.tieneRepuestos.textContent = service.tieneRepuestos || 'N/A';
-                m.repDespachados.textContent = service.repuestosDespachados || 'N/A';
-                m.fechaSolicitud.textContent = service.timestamp ? formatTimestamp(service.timestamp) : 'N/A';
-                m.fechaEdicion.textContent = service.fechaEdicion ? formatTimestamp(service.fechaEdicion) : 'Sin ediciones';
-                m.infoServicio.textContent = service.infoServicio || 'N/A';
+                // Campos editables
+                m.titleReqNumDisplay.textContent = service.numRequerimiento || 'N/A'; // Para el título del modal
+                m.numRequerimientoInput.value = service.numRequerimiento || '';
+                m.clienteInput.value = service.cliente || '';
+                m.numNVInput.value = service.numNV || '';
+                m.montoServicioInput.value = displayCurrency(service.montoServicio).replace('$','').trim(); // Monto sin $ y puntos para edición
+                m.tipoServicioSelect.value = service.tipoServicio || ''; // Asegura que se selecciona el valor correcto
+                m.direccionInput.value = service.direccion || '';
+                m.vendedorInput.value = service.vendedor || '';
+                m.contactoInput.value = service.nomContacto || '';
+                m.telefonoInput.value = service.numContacto || '';
+                m.tieneRepuestosSelect.value = service.tieneRepuestos || 'N/A';
+                m.repDespachadosSelect.value = service.repuestosDespachados || 'N/A';
+                m.infoServicioTextarea.value = service.infoServicio || '';
                 m.observaciones.value = service.observacionesPlanificacion || '';
+
+                // Campos de solo visualización (editables en tabla principal)
+                m.estadoDisplay.textContent = service.estado || 'N/A';
+                m.tecnicoDisplay.textContent = assignedTecnicos;
+                m.fechaAsignadaDisplay.textContent = service.fechaAsignada || 'N/A';
+                m.horaTrasladoDisplay.textContent = service.horaTraslado || 'N/A';
+                m.horaInicioDisplay.textContent = service.horaInicio || 'N/A';
+                m.horaTerminoDisplay.textContent = service.horaTermino || 'N/A';
+                m.fechaSolicitudDisplay.textContent = service.timestamp ? formatTimestamp(service.timestamp) : 'N/A';
+                m.fechaEdicionDisplay.textContent = service.fechaEdicion ? formatTimestamp(service.fechaEdicion) : 'Sin ediciones';
+
                 m.guardarBtn.dataset.serviceId = service.id;
             }
             document.getElementById(modalId).classList.add('visible');
@@ -604,11 +972,11 @@
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('visible');
         }
-        
+
         function openTecnicoSelectModal(serviceId) {
             const service = state.serviciosCache.find(s => s.id === serviceId);
             if (!service) return;
-            
+
             const assignedTecnicos = service.tecnicos || [];
             ui.tecnicoModal.list.innerHTML = '';
 
@@ -629,12 +997,29 @@
         // --- LISTENERS ---
         ui.filtroEstado.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroVendedor.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
+        ui.filtroTipoServicio.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); }); // Nuevo listener para el filtro de tipo de servicio
         ui.filtroBusqueda.addEventListener('input', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
 
         document.getElementById('exportar-csv').addEventListener('click', () => {
              if (state.filteredServices.length === 0) return alert('No hay servicios para exportar.');
-            const headers = ["Nº Requerimiento", "Nº NV", "Cliente", "Vendedor", "Tiene Repuestos", "Repuestos Despachados", "Fecha Creación", "Fecha Última Edición", "Fecha Asignada", "Hora Traslado", "Hora Inicio", "Hora Término", "Técnico(s) Asignado(s)", "Estado", "Info. Servicio", "Observaciones Planificación", "Dirección", "Contacto", "Teléfono"];
-            const rows = state.filteredServices.map(s => [s.numRequerimiento, s.numNV, s.cliente, s.vendedor, s.tieneRepuestos, s.repuestosDespachados, s.timestamp ? formatTimestamp(s.timestamp) : '', s.fechaEdicion ? formatTimestamp(s.fechaEdicion) : '', s.fechaAsignada, s.horaTraslado, s.horaInicio, s.horaTermino, (s.tecnicos || []).join('; '), s.estado, s.infoServicio, s.observacionesPlanificacion, s.direccion, s.nomContacto, s.numContacto].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`));
+            // Actualizar encabezados para CSV
+            const headers = [
+                "Nº Requerimiento", "Nº NV", "Cliente", "Monto Servicio", "Tipo Servicio", // Nuevos encabezados
+                "Vendedor", "Tiene Repuestos", "Repuestos Despachados", "Fecha Creación",
+                "Fecha Última Edición", "Fecha Asignada", "Hora Traslado", "Hora Inicio", "Hora Término",
+                "Técnico(s) Asignado(s)", "Estado", "Info. Servicio", "Observaciones Planificación",
+                "Dirección", "Contacto", "Teléfono"
+            ];
+            const rows = state.filteredServices.map(s => [
+                s.numRequerimiento, s.numNV, s.cliente, displayCurrency(s.montoServicio), s.tipoServicio, // Nuevos campos en el orden correcto
+                s.vendedor,
+                s.tieneRepuestos, s.repuestosDespachados,
+                s.timestamp ? formatTimestamp(s.timestamp) : '', s.fechaEdicion ? formatTimestamp(s.fechaEdicion) : '',
+                s.fechaAsignada, s.horaTraslado, s.horaInicio, s.horaTermino,
+                (s.tecnicos || []).join('; '), s.estado, s.infoServicio, s.observacionesPlanificacion,
+                s.direccion, s.nomContacto, s.numContacto
+            ].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`));
+
             const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const link = document.createElement('a');
             link.setAttribute('href', encodeURI(csvContent));
@@ -644,21 +1029,29 @@
 
         ui.tablaServiciosBody.addEventListener('change', async (e) => {
             const target = e.target;
+            // Solo los campos que se editan INLINE en la tabla
             const validNames = ['estado', 'fechaAsignada', 'horaTraslado', 'horaInicio', 'horaTermino'];
             if (!validNames.includes(target.name)) return;
-            
+
             const id = target.closest('tr').dataset.id;
             const service = state.serviciosCache.find(s => s.id === id);
             if (!service) return;
 
             const datos = { [target.name]: target.value };
-            const tempUpdatedService = { ...service, ...datos };
-
-            if (tempUpdatedService.estado === 'Pendiente' && tempUpdatedService.fechaAsignada && tempUpdatedService.tecnicos?.length > 0) {
-                datos.estado = 'Confirmado';
+            // Lógica para auto-confirmar el estado
+            if (target.name === 'fechaAsignada' || target.name === 'horaTraslado' || target.name === 'horaInicio' || target.name === 'horaTermino') {
+                const tempUpdatedService = { ...service, ...datos };
+                if (tempUpdatedService.estado === 'Pendiente' && tempUpdatedService.fechaAsignada && tempUpdatedService.tecnicos?.length > 0) {
+                    datos.estado = 'Confirmado';
+                    // Si el estado cambia, también actualiza el select en la UI (aunque el listener lo hará al re-renderizar)
+                    target.closest('tr').querySelector('select[name="estado"]').value = 'Confirmado';
+                }
+            } else if (target.name === 'estado') {
+                // No hay lógica de auto-confirmar desde el cambio de estado directamente,
+                // pero podrías añadirla si un cambio manual a 'Pendiente' debe revertirse, etc.
             }
-            
-            await actualizarServicio(id, datos); 
+
+            await actualizarServicio(id, datos);
         });
 
         ui.tablaServiciosBody.addEventListener('click', async (e) => {
@@ -669,21 +1062,44 @@
             if (!service) return;
 
             if (button.classList.contains('btn-delete')) {
-                if (confirm('¿Seguro que quieres eliminar este servicio?')) await eliminarServicio(serviceId);
-            } else if (button.classList.contains('btn-detail')) {
+                if (confirm('¿Seguro que quieres eliminar este servicio?')) {
+                    await eliminarServicio(serviceId);
+                }
+            } else if (button.classList.contains('btn-detail')) { // Ahora es el botón "Editar"
                 openModal('service-modal', service);
             } else if (button.classList.contains('btn-select-tecnicos')) {
                 openTecnicoSelectModal(serviceId);
             }
         });
-        
+
+        // MODIFICACIÓN: Event listener para el botón "Guardar Cambios" en el modal de edición
         ui.modal.guardarBtn.addEventListener('click', async () => {
             const id = ui.modal.guardarBtn.dataset.serviceId;
-            await actualizarServicio(id, { observacionesPlanificacion: ui.modal.observaciones.value });
-            alert('Observaciones guardadas.');
+            const service = state.serviciosCache.find(s => s.id === id);
+            if (!service) return;
+
+            const datosParaActualizar = {};
+
+            // Recopilar datos de los inputs/selects/textareas editables en el modal
+            datosParaActualizar.numRequerimiento = ui.modal.numRequerimientoInput.value;
+            datosParaActualizar.cliente = ui.modal.clienteInput.value;
+            datosParaActualizar.numNV = ui.modal.numNVInput.value;
+            datosParaActualizar.montoServicio = ui.modal.montoServicioInput.value.replace(/\$|\./g, ''); // Limpiar formato antes de guardar
+            datosParaActualizar.tipoServicio = ui.modal.tipoServicioSelect.value;
+            datosParaActualizar.direccion = ui.modal.direccionInput.value;
+            datosParaActualizar.vendedor = ui.modal.vendedorInput.value;
+            datosParaActualizar.nomContacto = ui.modal.contactoInput.value;
+            datosParaActualizar.numContacto = ui.modal.telefonoInput.value;
+            datosParaActualizar.tieneRepuestos = ui.modal.tieneRepuestosSelect.value;
+            datosParaActualizar.repuestosDespachados = ui.modal.repDespachadosSelect.value;
+            datosParaActualizar.infoServicio = ui.modal.infoServicioTextarea.value;
+            datosParaActualizar.observacionesPlanificacion = ui.modal.observaciones.value;
+
+            await actualizarServicio(id, datosParaActualizar);
+            alert('Servicio actualizado correctamente.');
             closeModal('service-modal');
         });
-        
+
         ui.tecnicoModal.guardarBtn.addEventListener('click', async () => {
             const id = ui.tecnicoModal.guardarBtn.dataset.serviceId;
             const service = state.serviciosCache.find(s => s.id === id);
@@ -692,7 +1108,8 @@
             const selectedTecnicos = Array.from(ui.tecnicoModal.list.querySelectorAll('input:checked')).map(input => input.value);
             const datos = { tecnicos: selectedTecnicos };
             const tempUpdatedService = { ...service, ...datos };
-            
+
+            // Lógica de auto-confirmación de estado
             if (tempUpdatedService.estado === 'Pendiente' && tempUpdatedService.fechaAsignada && tempUpdatedService.tecnicos?.length > 0) {
                 datos.estado = 'Confirmado';
             }
@@ -707,7 +1124,7 @@
             ui.bulkAddModal.pasteArea.value = '';
             openModal('bulk-add-modal');
         });
-        
+
         ui.bulkAddModal.saveBtn.addEventListener('click', async () => {
             const pasteData = ui.bulkAddModal.pasteArea.value.trim();
             if (!pasteData) return alert('El área de texto está vacía.');
@@ -718,40 +1135,45 @@
             const errors = [];
 
             rows.forEach((row, index) => {
-                if (!row.trim()) return; 
+                if (!row.trim()) return;
 
                 const cols = row.split('\t');
-                const cliente = cols[2] ? cols[2].trim() : '';
 
-                if (!cliente) {
+                // Asegúrate de que los índices de las columnas coincidan con el orden de la descripción
+                // Nº Req (0), Nº NV (1), Cliente (2), Monto Servicio (3), Tipo Servicio (4), Vendedor (5), Fecha Asignada (6), H. Traslado (7), H. Inicio (8), H. Termino (9), Técnico(s) (10), Info. Servicio (11)
+
+                const numRequerimiento = cols[0] ? cols[0].trim() : '';
+                const numNV = cols[1] ? cols[1].trim() : '';
+                const cliente = cols[2] ? cols[2].trim() : '';
+                const montoServicio = cols[3] ? cols[3].trim().replace(/\$|\./g, '') : ''; // Limpiar formato
+                const tipoServicio = cols[4] ? cols[4].trim() : '';
+                const vendedor = cols[5] ? cols[5].trim() : '';
+                const fechaAsignada = cols[6] ? cols[6].trim() : '';
+                const horaTraslado = cols[7] ? cols[7].trim() : '';
+                const horaInicio = cols[8] ? cols[8].trim() : '';
+                const horaTermino = cols[9] ? cols[9].trim() : '';
+                const tecnicoInput = cols[10] ? cols[10].trim() : '';
+                const infoServicio = cols[11] ? cols[11].trim() : '';
+
+                if (!cliente) { // Sigue siendo la validación principal
                     errors.push(`Fila ${index + 1}: El campo "Cliente" es obligatorio.`);
                     return;
                 }
 
-                const numRequerimiento = cols[0] ? cols[0].trim() : '';
-                const numNV = cols[1] ? cols[1].trim() : '';
-                const vendedor = cols[3] ? cols[3].trim() : '';
-                const fechaAsignada = cols[4] ? cols[4].trim() : '';
-                const horaTraslado = cols[5] ? cols[5].trim() : '';
-                const horaInicio = cols[6] ? cols[6].trim() : '';
-                const horaTermino = cols[7] ? cols[7].trim() : '';
-                const tecnicoInput = cols[8] ? cols[8].trim() : '';
-                const infoServicio = cols[9] ? cols[9].trim() : '';
-                
                 const tecnicos = tecnicoInput ? tecnicoInput.split(',').map(t => t.trim()) : [];
 
                 const newServiceRef = db.collection('servicios').doc();
                 const serviceData = {
-                    numRequerimiento, numNV, cliente, vendedor, fechaAsignada,
+                    numRequerimiento, numNV, cliente, montoServicio, tipoServicio, vendedor, fechaAsignada,
                     horaTraslado, horaInicio, horaTermino,
                     tecnicos, infoServicio,
                     estado: 'Pendiente',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     fechaEdicion: firebase.firestore.FieldValue.serverTimestamp(),
-                    tieneRepuestos: 'No',
-                    repuestosDespachados: 'N/A',
+                    tieneRepuestos: 'No', // Default
+                    repuestosDespachados: 'N/A', // Default
                 };
-                
+
                 if (serviceData.fechaAsignada && serviceData.tecnicos.length > 0) {
                     serviceData.estado = 'Confirmado';
                 }
@@ -780,7 +1202,7 @@
 
         ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); auth.signInWithEmailAndPassword(ui.emailInput.value, ui.passwordInput.value).catch(err => { ui.errorMessage.textContent = 'Error: Credenciales incorrectas.'; ui.errorMessage.style.display = 'block'; }); });
         ui.logoutButton.addEventListener('click', () => auth.signOut());
-        
+
         function toggleTheme(isDark) { document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }
         document.getElementById('theme-toggle').addEventListener('change', (e) => toggleTheme(e.target.checked));
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -790,7 +1212,7 @@
         ui.modalCloseBtns.forEach(btn => {
             btn.addEventListener('click', () => closeModal(btn.dataset.modalId));
         });
-        
+
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay.id); });
         });
