@@ -577,8 +577,8 @@
             }
         }
         
-        // === FUNCIÓN AÑADIDA PARA DUPLICAR SERVICIO ===
-        const duplicarServicio = async (id) => {
+        // === FUNCIÓN AÑADIDA PARA DUPLICAR SERVICIO ===        
+	    const duplicarServicio = async (id) => {
             const servicioOriginal = state.serviciosCache.find(s => s.id === id);
             if (!servicioOriginal) {
                 alert("No se encontró el servicio original para duplicar.");
@@ -605,13 +605,13 @@
                 infoServicio: servicioOriginal.infoServicio || '',
                 tieneRepuestos: servicioOriginal.tieneRepuestos || 'No',
                 repuestosDespachados: servicioOriginal.repuestosDespachados || 'N/A',
-                
+
                 // Información que se resetea para la nueva asignación
                 fechaAsignada: "",
                 horaTraslado: "",
                 horaInicio: "",
                 horaTermino: "",
-                tecnicos: [],
+                tecnicos: servicioOriginal.tecnicos || [],
                 observacionesPlanificacion: "", // Las observaciones son por día, así que se limpian
                 estado: "Pendiente", // El nuevo día empieza como Pendiente
 
