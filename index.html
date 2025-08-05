@@ -576,6 +576,59 @@
                 alert("Error al actualizar el servicio. Por favor, inténtalo de nuevo.");
             }
         }
+        
+        // === FUNCIÓN AÑADIDA PARA DUPLICAR SERVICIO ===
+        const duplicarServicio = async (id) => {
+            const servicioOriginal = state.serviciosCache.find(s => s.id === id);
+            if (!servicioOriginal) {
+                alert("No se encontró el servicio original para duplicar.");
+                return;
+            }
+
+            // Confirmación del usuario
+            if (!confirm(`¿Quieres añadir un nuevo día de servicio para el Req. Nº ${servicioOriginal.numRequerimiento || 'N/A'}? \nSe creará una nueva entrada con la misma información base.`)) {
+                return;
+            }
+
+            // Preparamos el objeto para el nuevo servicio
+            const nuevoServicioData = {
+                // Información que se copia
+                numRequerimiento: servicioOriginal.numRequerimiento || '',
+                numNV: servicioOriginal.numNV || '',
+                cliente: servicioOriginal.cliente || '',
+                montoServicio: servicioOriginal.montoServicio || '',
+                tipoServicio: servicioOriginal.tipoServicio || '',
+                vendedor: servicioOriginal.vendedor || '',
+                direccion: servicioOriginal.direccion || '',
+                nomContacto: servicioOriginal.nomContacto || '',
+                numContacto: servicioOriginal.numContacto || '',
+                infoServicio: servicioOriginal.infoServicio || '',
+                tieneRepuestos: servicioOriginal.tieneRepuestos || 'No',
+                repuestosDespachados: servicioOriginal.repuestosDespachados || 'N/A',
+                
+                // Información que se resetea para la nueva asignación
+                fechaAsignada: "",
+                horaTraslado: "",
+                horaInicio: "",
+                horaTermino: "",
+                tecnicos: [],
+                observacionesPlanificacion: "", // Las observaciones son por día, así que se limpian
+                estado: "Pendiente", // El nuevo día empieza como Pendiente
+
+                // Timestamps nuevos
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                fechaEdicion: firebase.firestore.FieldValue.serverTimestamp(),
+            };
+
+            try {
+                await db.collection('servicios').add(nuevoServicioData);
+                alert('Nuevo día de servicio añadido correctamente. Ahora puedes asignar fecha y técnicos.');
+                // El listener onSnapshot se encargará de re-renderizar la tabla automáticamente.
+            } catch (error) {
+                console.error("Error al duplicar el servicio: ", error);
+                alert("Ocurrió un error al añadir el nuevo día de servicio.");
+            }
+        };
 
         const eliminarServicio = async (id) => {
             const originalServices = [...state.serviciosCache]; // Almacena el estado original para revertir
@@ -589,15 +642,13 @@
             try {
                 await db.collection('servicios').doc(id).delete();
                 // El onSnapshot de Firestore manejará la actualización final del estado.
-                // No se necesita una llamada explícita a renderAll() aquí, ya que el listener
-                // se encargará de sincronizar el estado.
             } catch (error) {
                 console.error("Error al eliminar servicio: ", error);
                 alert("Error al eliminar el servicio. Por favor, inténtalo de nuevo.");
                 // Revertir si la eliminación falla
                 state.serviciosCache = originalServices;
-                state.filteredServices = originalFilteredServices; // También revertir servicios filtrados
-                renderAll(); // Vuelve a renderizar para mostrar el elemento de nuevo
+                state.filteredServices = originalFilteredServices;
+                renderAll();
             }
         };
 
@@ -614,24 +665,22 @@
             }
         }
 
-        // Función para formatear monto en pesos chilenos para visualización
         function displayCurrency(value) {
             if (value === undefined || value === null || value === '' || isNaN(value)) return 'N/A';
-            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10); // Limpia y convierte a número
+            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10);
             if (isNaN(numericValue)) return 'N/A';
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
         }
 
-        // Función para formatear el input de moneda en tiempo real
         function formatCurrency(input) {
-            let value = input.value.replace(/[^0-9]/g, ''); // Elimina cualquier caracter no numérico
+            let value = input.value.replace(/[^0-9]/g, '');
             if (value === '') {
                 input.value = '';
                 return;
             }
             let numericValue = parseInt(value, 10);
             value = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
-            input.value = value.replace('CLP', '').trim(); // Elimina 'CLP' y ajusta espacios
+            input.value = value.replace('CLP', '').trim();
         }
 
 
@@ -658,33 +707,33 @@
             filtroBusqueda: document.getElementById('filtro-busqueda'),
             filtroEstado: document.getElementById('filtro-estado'),
             filtroVendedor: document.getElementById('filtro-vendedor'),
-            filtroTipoServicio: document.getElementById('filtro-tipo-servicio'), // Nueva referencia para el filtro de tipo de servicio
+            filtroTipoServicio: document.getElementById('filtro-tipo-servicio'),
             resultsInfo: document.getElementById('results-info'),
             paginationControls: document.getElementById('pagination-controls'),
             themeToggle: document.getElementById('theme-toggle'),
             abrirModalMasivoBtn: document.getElementById('abrir-modal-masivo'),
             modal: {
                 overlay: document.getElementById('service-modal'),
-                titleReqNumDisplay: document.getElementById('modal-req-num-display'), // Para el título
+                titleReqNumDisplay: document.getElementById('modal-req-num-display'),
                 numRequerimientoInput: document.getElementById('modal-numRequerimiento-input'),
                 clienteInput: document.getElementById('modal-cliente-input'),
                 numNVInput: document.getElementById('modal-numNV-input'),
-                montoServicioInput: document.getElementById('modal-montoServicio-input'), // Nuevo input en modal
-                tipoServicioSelect: document.getElementById('modal-tipoServicio-select'),   // Nuevo select en modal
+                montoServicioInput: document.getElementById('modal-montoServicio-input'),
+                tipoServicioSelect: document.getElementById('modal-tipoServicio-select'),
                 direccionInput: document.getElementById('modal-direccion-input'),
                 vendedorInput: document.getElementById('modal-vendedor-input'),
-                estadoDisplay: document.getElementById('modal-estado'), // Sigue siendo display
-                tecnicoDisplay: document.getElementById('modal-tecnico'), // Sigue siendo display
-                fechaAsignadaDisplay: document.getElementById('modal-fechaAsignada'), // Sigue siendo display
-                horaTrasladoDisplay: document.getElementById('modal-horaTraslado'), // Sigue siendo display
-                horaInicioDisplay: document.getElementById('modal-horaInicio'), // Sigue siendo display
-                horaTerminoDisplay: document.getElementById('modal-horaTermino'), // Sigue siendo display
+                estadoDisplay: document.getElementById('modal-estado'),
+                tecnicoDisplay: document.getElementById('modal-tecnico'),
+                fechaAsignadaDisplay: document.getElementById('modal-fechaAsignada'),
+                horaTrasladoDisplay: document.getElementById('modal-horaTraslado'),
+                horaInicioDisplay: document.getElementById('modal-horaInicio'),
+                horaTerminoDisplay: document.getElementById('modal-horaTermino'),
                 contactoInput: document.getElementById('modal-contacto-input'),
                 telefonoInput: document.getElementById('modal-telefono-input'),
                 tieneRepuestosSelect: document.getElementById('modal-tieneRepuestos-select'),
                 repDespachadosSelect: document.getElementById('modal-repDespachados-select'),
-                fechaSolicitudDisplay: document.getElementById('modal-fecha-solicitud'), // Sigue siendo display
-                fechaEdicionDisplay: document.getElementById('modal-fecha-edicion'), // Sigue siendo display
+                fechaSolicitudDisplay: document.getElementById('modal-fecha-solicitud'),
+                fechaEdicionDisplay: document.getElementById('modal-fecha-edicion'),
                 infoServicioTextarea: document.getElementById('modal-info-servicio-textarea'),
                 observaciones: document.getElementById('modal-observaciones'),
                 guardarBtn: document.getElementById('modal-guardar-btn'),
@@ -728,15 +777,15 @@
         });
 
         function iniciarListenerServicios() {
-            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">Cargando servicios...</td></tr>`; // Modificado colspan
+            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">Cargando servicios...</td></tr>`;
             unsubscribeServicios = db.collection('servicios').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
                 state.serviciosCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 populateVendedorFilter();
-                populateTipoServicioFilter(); // Nueva llamada a la función para rellenar el filtro de tipo de servicio
+                populateTipoServicioFilter();
                 applyFiltersAndRender();
             }, error => {
                 console.error("Error al escuchar servicios:", error);
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`; // Modificado colspan
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`;
             });
         }
 
@@ -751,27 +800,14 @@
             ui.filtroVendedor.value = state.vendedoresCache.includes(currentSelection) ? currentSelection : 'todos';
         }
 
-        // Nueva función para rellenar el filtro de Tipo de Servicio
         function populateTipoServicioFilter() {
             const currentSelection = ui.filtroTipoServicio.value;
             ui.filtroTipoServicio.innerHTML = '<option value="todos">Todos</option>';
-
-            // Definir todas las opciones, incluyendo las nuevas y la modificación
             const tiposDeServicio = [
-                "Canal Tradicional",
-                "Descanso Turno",
-                "Montaje",
-                "Otro", // Nuevo
-                "Post Venta",
-                "Proyección Asistencia",
-                "Proyección Mantención", // Modificado de "Proyeccion"
-                "Proyección Repuestos", // Nuevo
-                "Retail Asistencia",
-                "Retail Mantencion",
-                "Retail Repuestos",
-                "Turno",
-                "Vacaciones"
-            ].sort(); // Ordenar alfabéticamente
+                "Canal Tradicional", "Descanso Turno", "Montaje", "Otro", "Post Venta",
+                "Proyección Asistencia", "Proyección Mantención", "Proyección Repuestos",
+                "Retail Asistencia", "Retail Mantencion", "Retail Repuestos", "Turno", "Vacaciones"
+            ].sort();
 
             tiposDeServicio.forEach(tipo => {
                 const option = new Option(tipo, tipo);
@@ -779,11 +815,9 @@
             });
             ui.filtroTipoServicio.value = tiposDeServicio.includes(currentSelection) ? currentSelection : 'todos';
 
-            // Actualizar también el select del modal para que tenga las mismas opciones
             const modalTipoServicioSelect = ui.modal.tipoServicioSelect;
             const currentModalSelection = modalTipoServicioSelect.value;
-            modalTipoServicioSelect.innerHTML = '<option value="">Seleccione un tipo</option>'; // Mantener la opción de "Seleccione un tipo"
-
+            modalTipoServicioSelect.innerHTML = '<option value="">Seleccione un tipo</option>';
             tiposDeServicio.forEach(tipo => {
                 const option = new Option(tipo, tipo);
                 modalTipoServicioSelect.add(option);
@@ -794,22 +828,22 @@
         function applyFiltersAndRender() {
             const estadoFilter = ui.filtroEstado.value;
             const vendedorFilter = ui.filtroVendedor.value;
-            const tipoServicioFilter = ui.filtroTipoServicio.value; // Obtener el valor del filtro de tipo de servicio
+            const tipoServicioFilter = ui.filtroTipoServicio.value;
             const searchTerm = ui.filtroBusqueda.value.toLowerCase();
 
             state.filteredServices = state.serviciosCache.filter(s => {
                 const matchEstado = estadoFilter === 'todos' || s.estado === estadoFilter;
                 const matchVendedor = vendedorFilter === 'todos' || s.vendedor === vendedorFilter;
-                const matchTipoServicio = tipoServicioFilter === 'todos' || s.tipoServicio === tipoServicioFilter; // Nuevo filtro de tipo de servicio
+                const matchTipoServicio = tipoServicioFilter === 'todos' || s.tipoServicio === tipoServicioFilter;
                 const matchSearch = searchTerm === '' ||
                                     (s.numRequerimiento?.toLowerCase().includes(searchTerm)) ||
                                     (s.numNV?.toLowerCase().includes(searchTerm)) ||
                                     (s.cliente?.toLowerCase().includes(searchTerm)) ||
                                     (s.vendedor?.toLowerCase().includes(searchTerm)) ||
                                     (s.estado?.toLowerCase().includes(searchTerm)) ||
-                                    (s.montoServicio && displayCurrency(s.montoServicio).toLowerCase().includes(searchTerm)) || // Permitir búsqueda por monto
-                                    (s.tipoServicio?.toLowerCase().includes(searchTerm)); // Permitir búsqueda por tipo de servicio
-                return matchEstado && matchVendedor && matchTipoServicio && matchSearch; // Incluir el nuevo filtro
+                                    (s.montoServicio && displayCurrency(s.montoServicio).toLowerCase().includes(searchTerm)) ||
+                                    (s.tipoServicio?.toLowerCase().includes(searchTerm));
+                return matchEstado && matchVendedor && matchTipoServicio && matchSearch;
             });
             renderAll();
         }
@@ -817,16 +851,16 @@
         function renderAll() {
             renderTable();
             renderPagination();
-            updateSortIndicators(); // Asegurar que los indicadores de ordenamiento se actualicen
+            updateSortIndicators();
         }
 
         function renderTable() {
             ui.tablaServiciosBody.innerHTML = '';
             const { currentPage, rowsPerPage } = state.pagination;
-            const servicesToRender = state.filteredServices; // Ya está ordenado por applyFiltersAndRender()
+            const servicesToRender = state.filteredServices;
 
             if (servicesToRender.length === 0) {
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">No hay servicios que mostrar.</td></tr>`; // Modificado colspan
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
                 return;
             }
 
@@ -851,10 +885,14 @@
 
                 const assignedTecnicos = s.tecnicos || [];
 
+                // === CÓDIGO DE LA FILA MODIFICADO CON EL NUEVO BOTÓN ===
                 tr.innerHTML = `
                     <td>${s.numRequerimiento || 'N/A'}</td>
                     <td>${s.numNV || 'N/A'}</td>
-                    <td class="cliente-cell">${s.cliente || 'N/A'}</td> <td>${displayCurrency(s.montoServicio)}</td> <td>${s.tipoServicio || 'N/A'}</td> <td>${s.vendedor ? s.vendedor.split('@')[0] : 'N/A'}</td>
+                    <td class="cliente-cell">${s.cliente || 'N/A'}</td>
+                    <td>${displayCurrency(s.montoServicio)}</td>
+                    <td>${s.tipoServicio || 'N/A'}</td>
+                    <td>${s.vendedor ? s.vendedor.split('@')[0] : 'N/A'}</td>
                     <td><span class="status-badge ${getBadgeClass(s.tieneRepuestos)}">${s.tieneRepuestos || 'N/A'}</span></td>
                     <td><span class="status-badge ${getBadgeClass(s.repuestosDespachados)}">${s.repuestosDespachados || 'N/A'}</span></td>
                     <td><input type="date" name="fechaAsignada" value="${s.fechaAsignada || ''}"></td>
@@ -876,8 +914,9 @@
                         </select>
                     </td>
                     <td><div class="action-cell">
-                        <button class="btn-detail" data-id="${s.id}">Editar</button>
-                        <button class="btn-delete" data-id="${s.id}">Eliminar</button>
+                        <button class="btn-detail" data-id="${s.id}" title="Editar Detalles">Editar</button>
+                        <button class="btn-add-day" data-id="${s.id}" title="Añadir otro día de servicio" style="background-color: var(--success); color: white;">+ Día</button>
+                        <button class="btn-delete" data-id="${s.id}" title="Eliminar Servicio">Eliminar</button>
                     </div></td>`;
                 ui.tablaServiciosBody.appendChild(tr);
 
@@ -919,7 +958,6 @@
             });
         }
 
-        // Se agregó esta función para el ordenamiento de columnas
         document.querySelectorAll('th[data-sort]').forEach(header => {
             header.addEventListener('click', () => {
                 const column = header.dataset.sort;
@@ -929,7 +967,7 @@
                     state.sortConfig.column = column;
                     state.sortConfig.order = 'asc';
                 }
-                applyFiltersAndRender(); // Re-aplicar filtros y renderizar para reordenar
+                applyFiltersAndRender();
             });
         });
 
@@ -938,13 +976,12 @@
                 const m = ui.modal;
                 const assignedTecnicos = service.tecnicos && service.tecnicos.length > 0 ? service.tecnicos.join(', ') : 'Sin Asignar';
 
-                // Campos editables
-                m.titleReqNumDisplay.textContent = service.numRequerimiento || 'N/A'; // Para el título del modal
+                m.titleReqNumDisplay.textContent = service.numRequerimiento || 'N/A';
                 m.numRequerimientoInput.value = service.numRequerimiento || '';
                 m.clienteInput.value = service.cliente || '';
                 m.numNVInput.value = service.numNV || '';
-                m.montoServicioInput.value = displayCurrency(service.montoServicio).replace('$','').trim(); // Monto sin $ y puntos para edición
-                m.tipoServicioSelect.value = service.tipoServicio || ''; // Asegura que se selecciona el valor correcto
+                m.montoServicioInput.value = displayCurrency(service.montoServicio).replace('$','').trim();
+                m.tipoServicioSelect.value = service.tipoServicio || '';
                 m.direccionInput.value = service.direccion || '';
                 m.vendedorInput.value = service.vendedor || '';
                 m.contactoInput.value = service.nomContacto || '';
@@ -954,7 +991,6 @@
                 m.infoServicioTextarea.value = service.infoServicio || '';
                 m.observaciones.value = service.observacionesPlanificacion || '';
 
-                // Campos de solo visualización (editables en tabla principal)
                 m.estadoDisplay.textContent = service.estado || 'N/A';
                 m.tecnicoDisplay.textContent = assignedTecnicos;
                 m.fechaAsignadaDisplay.textContent = service.fechaAsignada || 'N/A';
@@ -997,21 +1033,20 @@
         // --- LISTENERS ---
         ui.filtroEstado.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroVendedor.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
-        ui.filtroTipoServicio.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); }); // Nuevo listener para el filtro de tipo de servicio
+        ui.filtroTipoServicio.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroBusqueda.addEventListener('input', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
 
         document.getElementById('exportar-csv').addEventListener('click', () => {
              if (state.filteredServices.length === 0) return alert('No hay servicios para exportar.');
-            // Actualizar encabezados para CSV
             const headers = [
-                "Nº Requerimiento", "Nº NV", "Cliente", "Monto Servicio", "Tipo Servicio", // Nuevos encabezados
+                "Nº Requerimiento", "Nº NV", "Cliente", "Monto Servicio", "Tipo Servicio",
                 "Vendedor", "Tiene Repuestos", "Repuestos Despachados", "Fecha Creación",
                 "Fecha Última Edición", "Fecha Asignada", "Hora Traslado", "Hora Inicio", "Hora Término",
                 "Técnico(s) Asignado(s)", "Estado", "Info. Servicio", "Observaciones Planificación",
                 "Dirección", "Contacto", "Teléfono"
             ];
             const rows = state.filteredServices.map(s => [
-                s.numRequerimiento, s.numNV, s.cliente, displayCurrency(s.montoServicio), s.tipoServicio, // Nuevos campos en el orden correcto
+                s.numRequerimiento, s.numNV, s.cliente, displayCurrency(s.montoServicio), s.tipoServicio,
                 s.vendedor,
                 s.tieneRepuestos, s.repuestosDespachados,
                 s.timestamp ? formatTimestamp(s.timestamp) : '', s.fechaEdicion ? formatTimestamp(s.fechaEdicion) : '',
@@ -1029,7 +1064,6 @@
 
         ui.tablaServiciosBody.addEventListener('change', async (e) => {
             const target = e.target;
-            // Solo los campos que se editan INLINE en la tabla
             const validNames = ['estado', 'fechaAsignada', 'horaTraslado', 'horaInicio', 'horaTermino'];
             if (!validNames.includes(target.name)) return;
 
@@ -1038,53 +1072,46 @@
             if (!service) return;
 
             const datos = { [target.name]: target.value };
-            // Lógica para auto-confirmar el estado
             if (target.name === 'fechaAsignada' || target.name === 'horaTraslado' || target.name === 'horaInicio' || target.name === 'horaTermino') {
                 const tempUpdatedService = { ...service, ...datos };
                 if (tempUpdatedService.estado === 'Pendiente' && tempUpdatedService.fechaAsignada && tempUpdatedService.tecnicos?.length > 0) {
                     datos.estado = 'Confirmado';
-                    // Si el estado cambia, también actualiza el select en la UI (aunque el listener lo hará al re-renderizar)
                     target.closest('tr').querySelector('select[name="estado"]').value = 'Confirmado';
                 }
-            } else if (target.name === 'estado') {
-                // No hay lógica de auto-confirmar desde el cambio de estado directamente,
-                // pero podrías añadirla si un cambio manual a 'Pendiente' debe revertirse, etc.
             }
-
             await actualizarServicio(id, datos);
         });
 
+        // === LISTENER DE CLIC MODIFICADO PARA INCLUIR "AÑADIR DÍA" ===
         ui.tablaServiciosBody.addEventListener('click', async (e) => {
             const button = e.target.closest('button');
             if (!button?.dataset.id) return;
             const serviceId = button.dataset.id;
-            const service = state.serviciosCache.find(s => s.id === serviceId);
-            if (!service) return;
 
             if (button.classList.contains('btn-delete')) {
                 if (confirm('¿Seguro que quieres eliminar este servicio?')) {
                     await eliminarServicio(serviceId);
                 }
-            } else if (button.classList.contains('btn-detail')) { // Ahora es el botón "Editar"
-                openModal('service-modal', service);
+            } else if (button.classList.contains('btn-detail')) {
+                const service = state.serviciosCache.find(s => s.id === serviceId);
+                if (service) openModal('service-modal', service);
             } else if (button.classList.contains('btn-select-tecnicos')) {
                 openTecnicoSelectModal(serviceId);
+            } else if (button.classList.contains('btn-add-day')) {
+                await duplicarServicio(serviceId);
             }
         });
 
-        // MODIFICACIÓN: Event listener para el botón "Guardar Cambios" en el modal de edición
         ui.modal.guardarBtn.addEventListener('click', async () => {
             const id = ui.modal.guardarBtn.dataset.serviceId;
             const service = state.serviciosCache.find(s => s.id === id);
             if (!service) return;
 
             const datosParaActualizar = {};
-
-            // Recopilar datos de los inputs/selects/textareas editables en el modal
             datosParaActualizar.numRequerimiento = ui.modal.numRequerimientoInput.value;
             datosParaActualizar.cliente = ui.modal.clienteInput.value;
             datosParaActualizar.numNV = ui.modal.numNVInput.value;
-            datosParaActualizar.montoServicio = ui.modal.montoServicioInput.value.replace(/\$|\./g, ''); // Limpiar formato antes de guardar
+            datosParaActualizar.montoServicio = ui.modal.montoServicioInput.value.replace(/\$|\./g, '');
             datosParaActualizar.tipoServicio = ui.modal.tipoServicioSelect.value;
             datosParaActualizar.direccion = ui.modal.direccionInput.value;
             datosParaActualizar.vendedor = ui.modal.vendedorInput.value;
@@ -1109,7 +1136,6 @@
             const datos = { tecnicos: selectedTecnicos };
             const tempUpdatedService = { ...service, ...datos };
 
-            // Lógica de auto-confirmación de estado
             if (tempUpdatedService.estado === 'Pendiente' && tempUpdatedService.fechaAsignada && tempUpdatedService.tecnicos?.length > 0) {
                 datos.estado = 'Confirmado';
             }
@@ -1136,16 +1162,11 @@
 
             rows.forEach((row, index) => {
                 if (!row.trim()) return;
-
                 const cols = row.split('\t');
-
-                // Asegúrate de que los índices de las columnas coincidan con el orden de la descripción
-                // Nº Req (0), Nº NV (1), Cliente (2), Monto Servicio (3), Tipo Servicio (4), Vendedor (5), Fecha Asignada (6), H. Traslado (7), H. Inicio (8), H. Termino (9), Técnico(s) (10), Info. Servicio (11)
-
                 const numRequerimiento = cols[0] ? cols[0].trim() : '';
                 const numNV = cols[1] ? cols[1].trim() : '';
                 const cliente = cols[2] ? cols[2].trim() : '';
-                const montoServicio = cols[3] ? cols[3].trim().replace(/\$|\./g, '') : ''; // Limpiar formato
+                const montoServicio = cols[3] ? cols[3].trim().replace(/\$|\./g, '') : '';
                 const tipoServicio = cols[4] ? cols[4].trim() : '';
                 const vendedor = cols[5] ? cols[5].trim() : '';
                 const fechaAsignada = cols[6] ? cols[6].trim() : '';
@@ -1155,13 +1176,12 @@
                 const tecnicoInput = cols[10] ? cols[10].trim() : '';
                 const infoServicio = cols[11] ? cols[11].trim() : '';
 
-                if (!cliente) { // Sigue siendo la validación principal
+                if (!cliente) {
                     errors.push(`Fila ${index + 1}: El campo "Cliente" es obligatorio.`);
                     return;
                 }
 
                 const tecnicos = tecnicoInput ? tecnicoInput.split(',').map(t => t.trim()) : [];
-
                 const newServiceRef = db.collection('servicios').doc();
                 const serviceData = {
                     numRequerimiento, numNV, cliente, montoServicio, tipoServicio, vendedor, fechaAsignada,
@@ -1170,14 +1190,12 @@
                     estado: 'Pendiente',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     fechaEdicion: firebase.firestore.FieldValue.serverTimestamp(),
-                    tieneRepuestos: 'No', // Default
-                    repuestosDespachados: 'N/A', // Default
+                    tieneRepuestos: 'No',
+                    repuestosDespachados: 'N/A',
                 };
-
                 if (serviceData.fechaAsignada && serviceData.tecnicos.length > 0) {
                     serviceData.estado = 'Confirmado';
                 }
-
                 batch.set(newServiceRef, serviceData);
                 servicesToCreate++;
             });
