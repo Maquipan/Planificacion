@@ -24,6 +24,17 @@
             50% { background-color: rgba(0, 123, 255, 0.1); }
         }
 
+a.req-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+
+a.req-link:hover {
+    color: var(--accent); /* O el color que prefieras para el efecto hover */
+    text-decoration: underline; /* O quita esta línea si no quieres que se subraye al pasar el mouse */
+}
+
         [data-theme="dark"] tr.fila-notificacion {
             animation: parpadeo-notificacion-dark 2.5s infinite;
         }
@@ -883,7 +894,7 @@
             updateSortIndicators();
         }
 
-        function renderTable() {
+function renderTable() {
             ui.tablaServiciosBody.innerHTML = '';
             const servicesToRender = state.filteredServices;
             if (servicesToRender.length === 0) {
@@ -911,10 +922,20 @@
                     tr.classList.add('fila-notificacion');
                 }
 
+                // Lógica para determinar el hipervínculo del Nº Req.
+                let reqContent;
+                if (s.numRequerimiento && s.numRequerimiento.startsWith('15')) {
+                    reqContent = `<a href="https://app.fixeat.cl/maquipan/services?tableSearch=${s.numRequerimiento}" target="_blank" rel="noopener noreferrer" class="req-link">${s.numRequerimiento}</a>`;
+                } else if (s.numRequerimiento) {
+                    reqContent = `<a href="http://st.maquipanst.com/maquipan/st2/admin.php?mod=ficha_tecnico&req=${s.numRequerimiento}" target="_blank" rel="noopener noreferrer" class="req-link">${s.numRequerimiento}</a>`;
+                } else {
+                    reqContent = 'N/A';
+                }
+
                 const assignedTecnicos = s.tecnicos || [];
                 tr.innerHTML = `
                     <td>
-                        ${s.numRequerimiento || 'N/A'}
+                        ${reqContent}
                         ${s.notificacionPara === 'planificador' ? `<span class="notification-dot" title="${s.notificacionMensaje || 'Nueva actualización del ejecutivo'}"></span>` : ''}
                     </td>
                     <td>${s.numNV || 'N/A'}</td>
