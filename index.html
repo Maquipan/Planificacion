@@ -406,9 +406,8 @@ a.req-link:hover {
                                 <th data-sort="numRequerimiento">Nº Req.<span class="sort-indicator"></span></th>
                                 <th data-sort="numNV">Nº NV<span class="sort-indicator"></span></th>
                                 <th data-sort="cliente">Cliente<span class="sort-indicator"></span></th>
-                                <th data-sort="montoServicio">Monto<span class="sort-indicator"></span></th>
+                                <th data-sort="direccion">Dirección<span class="sort-indicator"></span></th>
                                 <th data-sort="tipoServicio">Tipo Servicio<span class="sort-indicator"></span></th>
-                                <th data-sort="vendedor">Vendedor<span class="sort-indicator"></span></th>
                                 <th>Tiene Rep.</th>
                                 <th>Rep. Desp.</th>
                                 <th>Fecha Asignada</th>
@@ -826,7 +825,7 @@ a.req-link:hover {
         // --- FIN: FUNCIONES DE LA CAMPANA DE NOTIFICACIÓN ---
 
         function iniciarListenerServicios() {
-            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">Cargando servicios...</td></tr>`;
+            ui.tablaServiciosBody.innerHTML = `<tr><td colspan="14" style="text-align: center;">Cargando servicios...</td></tr>`;
             unsubscribeServicios = db.collection('servicios').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
                 state.serviciosCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 populateVendedorFilter();
@@ -835,7 +834,7 @@ a.req-link:hover {
                 applyFiltersAndRender();
             }, error => {
                 console.error("Error al escuchar servicios:", error);
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`;
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="14" style="text-align: center; color: var(--danger);">Error al cargar datos.</td></tr>`;
             });
         }
 
@@ -898,7 +897,7 @@ function renderTable() {
             ui.tablaServiciosBody.innerHTML = '';
             const servicesToRender = state.filteredServices;
             if (servicesToRender.length === 0) {
-                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="15" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
+                ui.tablaServiciosBody.innerHTML = `<tr><td colspan="14" style="text-align: center;">No hay servicios que mostrar.</td></tr>`;
                 return;
             }
             const getBadgeClass = (value) => {
@@ -932,6 +931,15 @@ function renderTable() {
                     reqContent = 'N/A';
                 }
 
+                // Lógica para el hipervínculo de la Dirección
+                let direccionContent;
+                if (s.direccion) {
+                    const encodedDireccion = encodeURIComponent(s.direccion);
+                    direccionContent = `<a href="https://www.google.com/maps/search/?api=1&query=${encodedDireccion}" target="_blank" rel="noopener noreferrer" class="req-link">${s.direccion}</a>`;
+                } else {
+                    direccionContent = 'N/A';
+                }
+
                 const assignedTecnicos = s.tecnicos || [];
                 tr.innerHTML = `
                     <td>
@@ -940,9 +948,8 @@ function renderTable() {
                     </td>
                     <td>${s.numNV || 'N/A'}</td>
                     <td class="cliente-cell">${s.cliente || 'N/A'}</td>
-                    <td>${displayCurrency(s.montoServicio)}</td>
+                    <td class="cliente-cell">${direccionContent}</td>
                     <td>${s.tipoServicio || 'N/A'}</td>
-                    <td>${s.vendedor ? s.vendedor.split('@')[0] : 'N/A'}</td>
                     <td><span class="status-badge ${getBadgeClass(s.tieneRepuestos)}">${s.tieneRepuestos || 'N/A'}</span></td>
                     <td><span class="status-badge ${getBadgeClass(s.repuestosDespachados)}">${s.repuestosDespachados || 'N/A'}</span></td>
                     <td><input type="date" name="fechaAsignada" value="${s.fechaAsignada || ''}"></td>
@@ -1132,17 +1139,23 @@ function renderTable() {
         
         ui.tablaServiciosBody.addEventListener('click', async (e) => {
             const button = e.target.closest('button');
-            if (!button?.dataset.id) return;
-            const serviceId = button.dataset.id;
-            if (button.classList.contains('btn-delete')) {
-                if (confirm('¿Seguro que quieres eliminar este servicio?')) await eliminarServicio(serviceId);
-            } else if (button.classList.contains('btn-detail')) {
-                const service = state.serviciosCache.find(s => s.id === serviceId);
-                if (service) openModal('service-modal', service);
-            } else if (button.classList.contains('btn-select-tecnicos')) {
-                openModal('tecnico-select-modal', serviceId);
-            } else if (button.classList.contains('btn-add-day')) {
-                await duplicarServicio(serviceId);
+            if (button) { // Ensure button exists
+                const serviceId = button.dataset.id;
+                if (!serviceId) return;
+
+                if (button.classList.contains('btn-delete')) {
+                    if (confirm('¿Seguro que quieres eliminar este servicio?')) await eliminarServicio(serviceId);
+                } else if (button.classList.contains('btn-detail')) {
+                    const service = state.serviciosCache.find(s => s.id === serviceId);
+                    if (service) openModal('service-modal', service);
+                } else if (button.classList.contains('btn-select-tecnicos')) {
+                    openModal('tecnico-select-modal', serviceId);
+                } else if (button.classList.contains('btn-add-day')) {
+                    await duplicarServicio(serviceId);
+                }
+            } else if (e.target.closest('a')) {
+                // This allows the default link behavior (opening Google Maps) to proceed
+                return;
             }
         });
         
