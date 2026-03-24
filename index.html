@@ -333,14 +333,14 @@
             .header-controls { flex-direction: column; gap: 1rem; align-items: flex-start; }
             .action-buttons { width: 100%; justify-content: space-between; }
         }
-th[data-sort] {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+        th[data-sort] {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
 
-th[data-sort]:hover {
-    background-color: var(--bg-tertiary);
-}
+        th[data-sort]:hover {
+            background-color: var(--bg-tertiary);
+        }
     </style>
 </head>
 <body>
@@ -595,6 +595,17 @@ th[data-sort]:hover {
         const db = firebase.firestore();
         const auth = firebase.auth();
 
+        // =====================================================
+        // APP SECUNDARIA: Puente de regreso hacia Cotizaciones
+        // =====================================================
+        const firebaseCotizacionesConfig = {
+          apiKey: "AIzaSyDfk1H8_uKIe2sZxf0Bo1wWZPsWDYZy7xk",
+          authDomain: "control-cotizaciones.firebaseapp.com",
+          projectId: "control-cotizaciones"
+        };
+        const appCotizaciones = firebase.initializeApp(firebaseCotizacionesConfig, "CotizacionesApp");
+        const dbCotizaciones = appCotizaciones.firestore();
+
         // --- DATOS GEOGRÁFICOS ---
         const regionesYComunas = {
             "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
@@ -646,7 +657,7 @@ th[data-sort]:hover {
             filtroEstado: document.getElementById('filtro-estado'),
             filtroVendedor: document.getElementById('filtro-vendedor'),
             filtroTipoServicio: document.getElementById('filtro-tipo-servicio'),
-            filtroTecnico: document.getElementById('filtro-tecnico'), // NUEVO SELECTOR
+            filtroTecnico: document.getElementById('filtro-tecnico'), 
             resultsInfo: document.getElementById('results-info'),
             paginationControls: document.getElementById('pagination-controls'),
             themeToggle: document.getElementById('theme-toggle'),
@@ -660,11 +671,9 @@ th[data-sort]:hover {
                 numNVInput: document.getElementById('modal-numNV-input'),
                 montoServicioInput: document.getElementById('modal-montoServicio-input'),
                 tipoServicioSelect: document.getElementById('modal-tipoServicio-select'),
-                // Campos de Dirección nuevos
                 regionSelect: document.getElementById('modal-region-select'),
                 comunaSelect: document.getElementById('modal-comuna-select'),
                 direccionInput: document.getElementById('modal-direccion-input'),
-                
                 vendedorInput: document.getElementById('modal-vendedor-input'),
                 estadoDisplay: document.getElementById('modal-estado'),
                 tecnicoDisplay: document.getElementById('modal-tecnico'),
@@ -739,7 +748,7 @@ th[data-sort]:hover {
             }
         });
 
-        // Función para poblar el filtro de técnicos (LISTA DESPLEGABLE)
+        // Función para poblar el filtro de técnicos
         function populateTechnicianFilterSelect() {
             const select = ui.filtroTecnico;
             const currentVal = select.value;
@@ -761,6 +770,36 @@ th[data-sort]:hover {
             const finalData = { ...data, fechaEdicion: firebase.firestore.FieldValue.serverTimestamp() };
             try {
                 await db.collection('servicios').doc(id).update(finalData);
+                
+                // ============================================================
+                // INICIO: SINCRONIZACIÓN DE REGRESO A COTIZACIONES
+                // ============================================================
+                const service = state.serviciosCache.find(s => s.id === id);
+                
+                if (service && service.idCotizacion) {
+                    let datosCotizacion = {};
+                    
+                    // 1. Si editamos la fecha asignada
+                    if (data.fechaAsignada !== undefined) {
+                        datosCotizacion.fechaInstal = data.fechaAsignada;
+                    }
+                    
+                    // 2. Si editamos los técnicos (Opcional, pero muy útil)
+                    if (data.tecnicos !== undefined) {
+                        datosCotizacion.tecnico = data.tecnicos.join(', ') || 'Sin asignar';
+                    }
+
+                    // Enviar los cambios si hay algo que actualizar
+                    if (Object.keys(datosCotizacion).length > 0) {
+                        dbCotizaciones.collection("cotizaciones").doc(service.idCotizacion).update(datosCotizacion)
+                            .then(() => console.log("Datos sincronizados con Cotizaciones exitosamente."))
+                            .catch(err => console.error("Error al sincronizar con Cotizaciones:", err));
+                    }
+                }
+                // ============================================================
+                // FIN LÓGICA DE SINCRONIZACIÓN
+                // ============================================================
+
             } catch (error) {
                 console.error("Error al actualizar servicio: ", error);
                 alert("Error al actualizar el servicio. Por favor, inténtalo de nuevo.");
@@ -777,18 +816,16 @@ th[data-sort]:hover {
                 return;
             }
             const nuevoServicioData = {
+                idCotizacion: servicioOriginal.idCotizacion || null, // Mantiene el vínculo con la cotización original
                 numRequerimiento: servicioOriginal.numRequerimiento || '',
                 numNV: servicioOriginal.numNV || '',
                 cliente: servicioOriginal.cliente || '',
                 montoServicio: servicioOriginal.montoServicio || '',
                 tipoServicio: servicioOriginal.tipoServicio || '',
                 vendedor: servicioOriginal.vendedor || '',
-                
-                // Duplicamos también la dirección completa
                 direccion: servicioOriginal.direccion || '',
                 region: servicioOriginal.region || '',
                 comuna: servicioOriginal.comuna || '',
-
                 nomContacto: servicioOriginal.nomContacto || '',
                 numContacto: servicioOriginal.numContacto || '',
                 infoServicio: servicioOriginal.infoServicio || '',
@@ -833,7 +870,6 @@ th[data-sort]:hover {
         }
         
         function styleStatusDropdown(selectElement, status) {
-            // MODIFICADO: Se agrega 'status-Confirmar-con-cliente' a la lista de remoción
             selectElement.classList.remove('status-Pendiente', 'status-Confirmado', 'status-Esperando-Repuestos', 'status-Otros', 'status-EJECUTADO', 'status-Confirmar-con-cliente');
             if (status) {
                 const statusClass = `status-${status.replace(/\s+/g, '-')}`;
@@ -1010,7 +1046,6 @@ th[data-sort]:hover {
             const tecnicoFilter = ui.filtroTecnico.value;
             const searchTerm = ui.filtroBusqueda.value.toLowerCase();
             
-            // 1. Filtrado
             let result = state.serviciosCache.filter(s => {
                 const matchEstado = estadoFilter === 'todos' || s.estado === estadoFilter;
                 const matchVendedor = vendedorFilter === 'todos' || s.vendedor === vendedorFilter;
@@ -1031,12 +1066,10 @@ th[data-sort]:hover {
                 return matchEstado && matchVendedor && matchTipoServicio && matchSearch && matchTecnico;
             });
 
-            // 2. Lógica de Ordenamiento (MODIFICADO)
             const col = state.sortConfig.column;
             const order = state.sortConfig.order === 'asc' ? 1 : -1;
 
             result.sort((a, b) => {
-                // Lógica especial para el timestamp de Firebase
                 if (col === 'timestamp') {
                     const valA = a[col]?.seconds || 0;
                     const valB = b[col]?.seconds || 0;
@@ -1046,12 +1079,10 @@ th[data-sort]:hover {
                 let valA = a[col] || '';
                 let valB = b[col] || '';
 
-                // Si son números (como monto o requerimiento numérico), comparar como tales
                 if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
                     return (parseFloat(valA) - parseFloat(valB)) * order;
                 }
 
-                // Comparación de texto estándar
                 return valA.toString().localeCompare(valB.toString(), 'es', { sensitivity: 'base' }) * order;
             });
 
@@ -1102,15 +1133,14 @@ th[data-sort]:hover {
                     reqContent = 'N/A';
                 }
 
-                // --- LÓGICA DE DIRECCIÓN COMBINADA ---
                 let direccionCompleta = s.direccion || '';
                 if (s.comuna) direccionCompleta += `, ${s.comuna}`;
                 if (s.region) direccionCompleta += `, ${s.region}`;
                 
                 let direccionContent = 'N/A';
-                if (direccionCompleta.trim() !== ', ') { // Si no está vacío
+                if (direccionCompleta.trim() !== ', ') { 
                      const encodedDireccion = encodeURIComponent(direccionCompleta);
-                     direccionContent = `<a href="https://www.google.com/maps/search/?api=1&query=${encodedDireccion}" target="_blank" rel="noopener noreferrer" class="req-link">${direccionCompleta}</a>`;
+                     direccionContent = `<a href="https://www.google.com/maps/search/?api=1&query=$${encodedDireccion}" target="_blank" rel="noopener noreferrer" class="req-link">${direccionCompleta}</a>`;
                 }
 
                 const assignedTecnicos = s.tecnicos || [];
@@ -1204,18 +1234,16 @@ th[data-sort]:hover {
                 const m = ui.modal;
                 m.titleReqNumDisplay.textContent = service.numRequerimiento || 'N/A';
                 
-                // Campos Simples
                 m.numRequerimientoInput.value = service.numRequerimiento || '';
                 m.numNVInput.value = service.numNV || '';
                 m.clienteInput.value = service.cliente || '';
                 m.montoServicioInput.value = displayCurrency(service.montoServicio).replace('$','').trim();
                 m.tipoServicioSelect.value = service.tipoServicio || '';
                 
-                // --- CARGAR DIRECCIÓN DESGLOSADA ---
                 m.regionSelect.value = service.region || '';
-                cargarComunasModal(service.region || ''); // Carga las comunas
-                m.comunaSelect.value = service.comuna || ''; // Selecciona la comuna
-                m.direccionInput.value = service.direccion || ''; // Calle y número
+                cargarComunasModal(service.region || ''); 
+                m.comunaSelect.value = service.comuna || ''; 
+                m.direccionInput.value = service.direccion || ''; 
 
                 m.vendedorInput.value = service.vendedor || '';
                 m.contactoInput.value = service.nomContacto || '';
@@ -1315,7 +1343,7 @@ th[data-sort]:hover {
         ui.filtroEstado.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroVendedor.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
         ui.filtroTipoServicio.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
-        ui.filtroTecnico.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); }); // LISTENER TÉCNICO
+        ui.filtroTecnico.addEventListener('change', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); }); 
         ui.filtroBusqueda.addEventListener('input', () => { state.pagination.currentPage = 1; applyFiltersAndRender(); });
 
         ui.tablaServiciosBody.addEventListener('change', async (e) => {
@@ -1331,7 +1359,7 @@ th[data-sort]:hover {
         
         ui.tablaServiciosBody.addEventListener('click', async (e) => {
             const button = e.target.closest('button');
-            if (button) { // Ensure button exists
+            if (button) { 
                 const serviceId = button.dataset.id;
                 if (!serviceId) return;
 
@@ -1346,7 +1374,6 @@ th[data-sort]:hover {
                     await duplicarServicio(serviceId);
                 }
             } else if (e.target.closest('a')) {
-                // This allows the default link behavior (opening Google Maps) to proceed
                 return;
             }
         });
@@ -1362,12 +1389,9 @@ th[data-sort]:hover {
                 numNV: ui.modal.numNVInput.value,
                 montoServicio: ui.modal.montoServicioInput.value.replace(/\$|\./g, ''),
                 tipoServicio: ui.modal.tipoServicioSelect.value,
-                
-                // --- GUARDAR DIRECCIÓN DESGLOSADA ---
                 region: ui.modal.regionSelect.value,
                 comuna: ui.modal.comunaSelect.value,
                 direccion: ui.modal.direccionInput.value,
-
                 vendedor: ui.modal.vendedorInput.value,
                 nomContacto: ui.modal.contactoInput.value,
                 numContacto: ui.modal.telefonoInput.value,
@@ -1492,7 +1516,6 @@ th[data-sort]:hover {
         ui.exportarCsvBtn.addEventListener('click', () => {
              if (state.filteredServices.length === 0) return alert('No hay servicios para exportar.');
             
-            // Se agregaron Región y Comuna a los headers y rows
             const headers = ["Nº Requerimiento", "Nº NV", "Cliente", "Monto Servicio", "Tipo Servicio", "Vendedor", "Tiene Repuestos", "Repuestos Despachados", "Fecha Creación", "Fecha Última Edición", "Fecha Asignada", "Hora Traslado", "Hora Inicio", "Hora Término", "Técnico(s) Asignado(s)", "Estado", "Info. Servicio", "Observaciones Planificación", "Región", "Comuna", "Dirección", "Contacto", "Teléfono"];
             
             const rows = state.filteredServices.map(s => [
